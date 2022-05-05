@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use state::{SwapType}
-use cosmwasm_std::{Binary, Coin, Decimal, Uint128};
+
+use cosmwasm_std::{Binary, Coin, Decimal,BlockInfo,Addr, Uint128};
 use cw20::{Balance, Expiration};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
@@ -11,16 +11,17 @@ pub struct InstantiateMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    
+    Create(CreateMsg)
 }
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CreateMsg {
+    pub id:String,
     pub contract: Addr,
     pub payment_token:Addr,
     pub token_id:String,    
     pub expires: Expiration,    
     pub price: Uint128,
-    pub swap_type SwapType,
+    pub swap_type: bool,
 }
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -47,6 +48,6 @@ pub struct DetailsResponse {
     pub payment_token:Addr,
     pub token_id:String,    
     pub expires: Expiration,    
-    pub price: Uint128
-    pub swap_type SwapType,
+    pub price: Uint128,
+    pub swap_type bool,
 }

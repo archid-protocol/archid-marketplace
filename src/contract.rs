@@ -1,14 +1,14 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,Addr};
 use cw2::set_contract_version;
 use cw20::{Balance, Expiration};
 use crate::error::ContractError;
 use crate::msg::{
-    is_valid_name, BalanceHuman, CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg,
-    ListResponse, QueryMsg, ReceiveMsg,
+    CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg,
+     QueryMsg
 };
-use crate::state::{State, STATE};
+use crate::state::{ SWAPS};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:test";
@@ -21,17 +21,12 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    let state = State {
-        count: msg.count,
-        owner: info.sender.clone(),
-    };
+    
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    STATE.save(deps.storage, &state)?;
+    //STATE.save(deps.storage, &state)?;
 
-    Ok(Response::new()
-        .add_attribute("method", "instantiate")
-        .add_attribute("owner", info.sender)
-        .add_attribute("count", msg.count.to_string()))
+    Ok(Response::new())
+        .
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -50,7 +45,7 @@ pub fn execute(
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         //QueryMsg::List { start_after, limit } => to_binary(&query_list(deps, start_after, limit)?),
-        QueryMsg::Details { id } => to_binary(&query_details(deps, id)?),
+        QueryMsg::Details { id } => to_binary(&query_details(deps, id)?)
     }
 }
 fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
@@ -58,13 +53,14 @@ fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
 
     // Convert balance to human balance
     
-    let details = DetailsResponse {
-        swap.contract,
-        swap.payment_token,
-        swap.token_id,    
-        swap.expires,    
-        swap.price,
-        swap.swap_type 
+    let details = DetailsResponse{
+        creator:swap.creator,
+        contract:swap.contract,
+        payment_token:swap.payment_token,
+        token_id:swap.token_id,    
+        expires:swap.expires,    
+        price:swap.price,
+        swap_type:swap.swap_type 
     };
     Ok(details)
 }
@@ -88,12 +84,13 @@ pub fn execute_create(
     
         let recipient = deps.api.addr_validate(&msg.recipient)?;
         let swap = CW721Swap {
-            msg.contract,
-            msg.payment_token,
-            msg.token_id,    
-            msg.expires,    
-            msg.price,
-            msg.swap_type 
+            creator:info.sender,
+            contract:msg.contract,
+            payment_token:msg.payment_token,
+            token_id:msg.token_id,    
+            expires:msg.expires,    
+            price:msg.price,
+            msg.swap_type, 
         };
     
         // Try to store it, fail if the id already exists (unmodifiable swaps)
@@ -102,11 +99,8 @@ pub fn execute_create(
             Some(_) => Err(ContractError::AlreadyExists {}),
         })?;
     
-        let res = Response::new()
-            .add_attribute("action", "create")
-            .add_attribute("id", msg.id)
-            .add_attribute("hash", msg.hash)
-            .add_attribute("recipient", msg.recipient);
+        let res = Response::new();
+            
         Ok(res)
 }
 

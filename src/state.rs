@@ -1,26 +1,23 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use cw_storage_plus::{Bound, Map};
-use cosmwasm_std::Addr;
+
 use cw_storage_plus::Item;
 use cw20::{Balance, Expiration};
-use cosmwasm_std::{Binary, Coin, Decimal, Uint128};
+use cosmwasm_std::{Binary, Coin, Decimal,BlockInfo,Addr, Uint128};
 
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema)]
 pub struct CW721Swap {    
     pub creator: Addr,
     pub contract: Addr,
     pub payment_token:Addr,
     pub token_id:String,    
     pub expires: Expiration,    
-    pub price: Uint128
-    pub swap_type SwapType,
+    pub price: Uint128,
+    pub swap_type:bool,
 }
-pub enum SwapType{
-    OFFER,
-    FORSALE,
-}
+
 
 impl CW721Swap {
     pub fn is_expired(&self, block: &BlockInfo) -> bool {
