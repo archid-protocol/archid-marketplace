@@ -27,10 +27,11 @@ pub struct CreateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     /// Show all open swaps. Return type is ListResponse.
-    List {
+    /*List {
         start_after: Option<String>,
         limit: Option<u32>,
     },
+    */
     /// Returns the details of the named swap, error if not created.
     /// Return type: DetailsResponse.
     Details { id: String },
@@ -49,5 +50,5 @@ pub struct DetailsResponse {
     pub token_id:String,    
     pub expires: Expiration,    
     pub price: Uint128,
-    pub swap_type bool,
+    pub swap_type:bool
 }

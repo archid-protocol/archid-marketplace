@@ -1,14 +1,14 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,Addr};
+use cosmwasm_std::{to_binary, Binary, Deps,BankMsg, DepsMut, Env, MessageInfo, Response, StdResult,Addr,WasmMsg, SubMsg};
 use cw2::set_contract_version;
-use cw20::{Balance, Expiration};
+use cw20::{Balance, Expiration,Cw20ExecuteMsg};
 use crate::error::ContractError;
 use crate::msg::{
     CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg,
      QueryMsg
 };
-use crate::state::{ SWAPS};
+use crate::state::{ CW721Swap,SWAPS};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:test";
@@ -20,13 +20,10 @@ pub fn instantiate(
     _env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
-) -> Result<Response, ContractError> {
-    
+) -> Result<Response, ContractError> {    
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    //STATE.save(deps.storage, &state)?;
-
-    Ok(Response::new())
-        .
+    
+    Ok(Response::new())       
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -37,7 +34,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::CreateMsg  {} => createListing(deps),
+        ExecuteMsg::Create(msg) => {execute_create(deps,_env,info,msg)},
        // ExecuteMsg::Cancel { id } => try_reset(deps, info, id),
     }
 }
@@ -70,19 +67,19 @@ pub fn execute_create(
     info: MessageInfo,
     msg: CreateMsg,
     ) -> Result<Response, ContractError> {
-        if !is_valid_name(&msg.id) {
+        /*if !is_valid_name(&msg.id) {
             return Err(ContractError::InvalidId {});
-        }
+        }**/
     
           
         // Ensure this is 32 bytes hex-encoded, and decode
-        let hash = parse_hex_32(&msg.hash)?;
+        //let hash = parse_hex_32(&msg.hash)?;
     
         if msg.expires.is_expired(&env.block) {
             return Err(ContractError::Expired {});
         }
     
-        let recipient = deps.api.addr_validate(&msg.recipient)?;
+       // let recipient = deps.api.addr_validate(&msg.recipient)?;
         let swap = CW721Swap {
             creator:info.sender,
             contract:msg.contract,
@@ -90,7 +87,7 @@ pub fn execute_create(
             token_id:msg.token_id,    
             expires:msg.expires,    
             price:msg.price,
-            msg.swap_type, 
+            swap_type:msg.swap_type, 
         };
     
         // Try to store it, fail if the id already exists (unmodifiable swaps)
