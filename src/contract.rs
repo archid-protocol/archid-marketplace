@@ -1,12 +1,12 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps,BankMsg, DepsMut, Env, MessageInfo, Response, StdResult,Addr,WasmMsg, SubMsg};
+use cosmwasm_std::{to_binary, Binary, Deps,BankMsg, DepsMut,Uint128, Env, MessageInfo, Response, StdResult,Addr,WasmMsg, SubMsg};
 use cw2::set_contract_version;
 use cw20::{Balance, Expiration,Cw20ExecuteMsg};
 use crate::error::ContractError;
 use crate::msg::{
     CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg,
-     QueryMsg
+     QueryMsg,CancelMsg
 };
 use crate::state::{ CW721Swap,SWAPS};
 
@@ -35,6 +35,8 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Create(msg) => {execute_create(deps,_env,info,msg)},
+        ExecuteMsg::Finish(msg) =>{execute_finish(deps,_env,info,msg)},
+        ExecuteMsg::Cancel(msg) =>{execute_cancel(deps,_env,info,msg)}
        // ExecuteMsg::Cancel { id } => try_reset(deps, info, id),
     }
 }
@@ -100,11 +102,28 @@ pub fn execute_create(
             
         Ok(res)
 }
+pub fn execute_finish(deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: CreateMsg)-> Result<Response, ContractError> {
+        if msg.expires.is_expired(&env.block) {
+            return Err(ContractError::Expired {});
+        }
+        let res = Response::new();
+            
+        Ok(res)
+    }
+pub fn execute_cancel(deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: CancelMsg)-> Result<Response, ContractError> {
+        let res = Response::new();
+            
+        Ok(res)
+    }
 
 
-
-
-fn send_tokens(to: &Addr, amount: Balance) -> StdResult<Vec<SubMsg>> {
+fn transfer_tokens(to: &Addr, amount: Balance) -> StdResult<Vec<SubMsg>> {
     if amount.is_empty() {
         Ok(vec![])
     } else {
@@ -135,9 +154,54 @@ fn send_tokens(to: &Addr, amount: Balance) -> StdResult<Vec<SubMsg>> {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_dependencies_with_balance, mock_env, mock_info,
+        mock_dependencies, mock_dependencies_with_balance, mock_env, mock_info,MOCK_CONTRACT_ADDR,
     };
     use cosmwasm_std::{coins, from_binary};
+    #[test]
+    fn test_instantiate() {
+        let mut deps = mock_dependencies();
 
-    
+        // Instantiate an empty contract
+        let instantiate_msg = InstantiateMsg {};
+        let info = mock_info("anyone", &[]);
+        let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
+        assert_eq!(0, res.messages.len());
+    }
+    #[test]
+    fn test_creation() {
+        let mut deps = mock_dependencies();
+
+        // Instantiate an empty contract
+        let instantiate_msg = InstantiateMsg {};
+        let info = mock_info("anyone", &[]);
+        let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
+        assert_eq!(0, res.messages.len());
+        let creation_msg= CreateMsg{ 
+            id:"firstswap".to_string(),
+            contract: Addr::unchecked(MOCK_CONTRACT_ADDR),
+            payment_token:Addr::unchecked(MOCK_CONTRACT_ADDR),
+            token_id:"2343".to_string(),    
+            expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),    
+            price:Uint128::from(100000_u32),
+            swap_type:true,
+        };
+        let  info2 = mock_info("anyone", &[]);
+        execute(deps.as_mut(), mock_env(), info2, ExecuteMsg::Create(creation_msg)).unwrap();
+        let creation_msg2= CreateMsg{ 
+            id:"2ndswap".to_string(),
+            contract: Addr::unchecked(MOCK_CONTRACT_ADDR),
+            payment_token:Addr::unchecked(MOCK_CONTRACT_ADDR),
+            token_id:"2343".to_string(),    
+            expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),    
+            price:Uint128::from(100000_u32),
+            swap_type:true,
+        };
+        let  info2 = mock_info("anyone", &[]);
+        execute(deps.as_mut(), mock_env(), info2, ExecuteMsg::Create(creation_msg2)).unwrap();
+       // let mut deps = mock_dependencies();
+        let mut qres:DetailsResponse=from_binary(&query(deps.as_ref(), mock_env(), QueryMsg::Details{id:"firstswap".to_string()}).unwrap()).unwrap();
+        println!("{}",qres.creator);
+        println!("{}",qres.contract);
+        println!("{}",qres.payment_token);
+    }
 }

@@ -11,8 +11,17 @@ pub struct InstantiateMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    Create(CreateMsg)
+    Create(CreateMsg),
+    Finish(CreateMsg),
+    Cancel(CancelMsg),
+
 }
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct CancelMsg{
+    pub id:String,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CreateMsg {
     pub id:String,
