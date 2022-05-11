@@ -46,6 +46,7 @@ cosmwasm-storage = "1.0.0-beta5"
 cw-storage-plus = "0.12"
 cw2 = "0.12"
 cw20 = { version = "0.12.1" }
+cw721-base = "0.13.2"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = "1.0"

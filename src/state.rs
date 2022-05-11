@@ -10,7 +10,7 @@ use cosmwasm_std::{Binary, Coin, Decimal,BlockInfo,Addr, Uint128};
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema)]
 pub struct CW721Swap {    
     pub creator: Addr,
-    pub contract: Addr,
+    pub nft_contract: Addr,
     pub payment_token:Addr,
     pub token_id:String,    
     pub expires: Expiration,    

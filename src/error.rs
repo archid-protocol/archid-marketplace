@@ -27,7 +27,10 @@ pub enum ContractError {
 
     #[error("Expired atomic swap")]
     Expired,
-
+    #[error("Cancelled atomic swap")]
+    Cancelled,
+    #[error("Completed atomic swap")]
+    Completed,
     #[error("Atomic swap already exists")]
     AlreadyExists,
 }
