@@ -24,7 +24,8 @@ pub enum ContractError {
 
     #[error("Atomic swap not yet expired")]
     NotExpired,
-
+    #[error("Atomic swap not yet expired")]
+    Unauthorized,
     #[error("Expired atomic swap")]
     Expired,
     #[error("Cancelled atomic swap")]

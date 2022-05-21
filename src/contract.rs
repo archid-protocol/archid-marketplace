@@ -2,10 +2,11 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, CosmosMsg,Binary, Deps,BankMsg, DepsMut,Uint128, Env, MessageInfo, Response, StdResult,Addr,WasmMsg, SubMsg};
 use cw2::set_contract_version;
-use cw20::{Balance, Expiration,Cw20ExecuteMsg};
+use cosmwasm_std::Empty;
+use cw20::{Balance,Cw20Coin, Expiration,Cw20ExecuteMsg,Cw20Contract};
 use cw721_base::{
     msg::ExecuteMsg as Cw721ExecuteMsg, msg::InstantiateMsg as Cw721InstantiateMsg, Extension,
-    MintMsg,
+    MintMsg,Cw721Contract
 };
 use crate::error::ContractError;
 use crate::msg::{
@@ -38,7 +39,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Create(msg) => {execute_create(deps,_env,info,msg)},
+        ExecuteMsg::Create(msg) =>{execute_create(deps,_env,info,msg)},
         ExecuteMsg::Finish(msg) =>{execute_finish(deps,_env,info,msg)},
         ExecuteMsg::Cancel(msg) =>{execute_cancel(deps,_env,info,msg)}
        // ExecuteMsg::Cancel { id } => try_reset(deps, info, id),
@@ -111,15 +112,15 @@ pub fn execute_finish(deps: DepsMut,
     info: MessageInfo,
     msg: CreateMsg)-> Result<Response, ContractError> {
         let swap = SWAPS.load(deps.storage, &msg.id)?;
-        let _can = CANCELLED.load(deps.storage, &msg.id)?;
-        let _com=  COMPLETED.load(deps.storage,&msg.id)?;
+        let _can = CANCELLED.may_load(deps.storage, &msg.id)?;
+        let _com=  COMPLETED.may_load(deps.storage,&msg.id)?;
         if msg.expires.is_expired(&env.block) {
             return Err(ContractError::Expired {});
         }
-        if _can==true{
+        if _can!=None{
             return Err(ContractError::Cancelled {});
         }
-        if _com==true{
+        if _com!=None{
             return Err(ContractError::Completed {});
         }
         let transfer_results= match msg.swap_type{
@@ -140,6 +141,10 @@ pub fn execute_cancel(deps: DepsMut,
     info: MessageInfo,
     msg: CancelMsg)-> Result<Response, ContractError> {
         let res = Response::new();
+        let swap = SWAPS.load(deps.storage, &msg.id)?;
+        if info.sender!=swap.creator{
+            return Err(ContractError::Unauthorized {});
+        }
         CANCELLED.update(deps.storage, &msg.id, |existing| match existing {
             None => Ok(true),
             Some(_) => Err(ContractError::AlreadyExists {}),
@@ -153,7 +158,7 @@ fn handle_swap_transfers(nft_sender:&Addr,nft_receiver: &Addr,details:CW721Swap)
     let nft_transfer_msg = Cw721ExecuteMsg::<Extension>::TransferNft{
         recipient: nft_receiver.to_string(),
         token_id: details.token_id.clone(),
-    };;
+    };
    
     let cw721_callback = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: details.nft_contract.to_string(),
@@ -173,6 +178,7 @@ fn handle_swap_transfers(nft_sender:&Addr,nft_receiver: &Addr,details:CW721Swap)
     };
     Ok(vec![SubMsg::new(cw721_callback),SubMsg::new(cw20_callback)])
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -180,7 +186,8 @@ mod tests {
         mock_dependencies, mock_dependencies_with_balance, mock_env, mock_info,MOCK_CONTRACT_ADDR,
     };
     use cosmwasm_std::{coins, from_binary};
-    #[test]
+   
+    /*#[test]
     fn test_instantiate() {
         let mut deps = mock_dependencies();
 
@@ -228,4 +235,6 @@ mod tests {
         println!("{}",qres.open);
         assert_eq!(qres.open, true);
     }
+    **/
+   
 }
