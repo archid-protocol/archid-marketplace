@@ -6,7 +6,7 @@ use cw_storage_plus::Item;
 use cw20::{Balance, Expiration};
 use cosmwasm_std::{Binary, Coin, Decimal,BlockInfo,Addr, Uint128};
 
-
+// swap type of true equals offer, swap type of false equals buy
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema)]
 pub struct CW721Swap {    
     pub creator: Addr,

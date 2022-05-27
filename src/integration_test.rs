@@ -146,13 +146,13 @@ fn test_buy() {
         .execute_contract(owner.clone(), nft.clone(), &mint_msg, &[])
         .unwrap();
    
-    let approve_msg = Cw721ExecuteMsg::Approve::<Extension> {
+    let nft_approve_msg = Cw721ExecuteMsg::Approve::<Extension> {
             spender: swap.to_string(),
             token_id: token_id.clone(),
             expires: None,
     };
     app
-    .execute_contract(nft_owner.clone(), nft.clone(), &approve_msg, &[])
+    .execute_contract(nft_owner.clone(), nft.clone(), &nft_approve_msg, &[])
     .unwrap();
     
     /**
@@ -172,7 +172,7 @@ fn test_buy() {
     .unwrap();
     let creation_msg= CreateMsg{ 
         id:"firstswap".to_string(),
-        contract: Addr::unchecked(swap),
+        contract: Addr::unchecked(nft.clone()),
         payment_token:Addr::unchecked(erc20),
         token_id:token_id.clone(),    
         expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),    

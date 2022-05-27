@@ -124,17 +124,18 @@ pub fn execute_finish(deps: DepsMut,
         if _com!=None{
             return Err(ContractError::Completed {});
         }
-        //let results=handle_swap_transfers(&swap.creator,&info.sender,swap.clone())?;
+        //let transfer_results=handle_swap_transfers(&info.sender,&swap.creator,swap.clone())?;
         let transfer_results= match msg.swap_type{
             true => handle_swap_transfers(&swap.creator,&info.sender,swap.clone())?,
             false=> handle_swap_transfers(&info.sender,&swap.creator,swap.clone())?,
         };
         
+        
         COMPLETED.update(deps.storage, &msg.id, |existing| match existing {
             None => Ok(true),
             Some(_) => Err(ContractError::AlreadyExists {}),
         })?;
-        let res = Response::new();
+        let res = Response::new().add_messages(transfer_results);
             
         Ok(res)
     }
@@ -155,31 +156,32 @@ pub fn execute_cancel(deps: DepsMut,
         Ok(res)
     }
 
-
-fn handle_swap_transfers(nft_sender:&Addr,nft_receiver: &Addr,details:CW721Swap) -> StdResult<Vec<SubMsg>> {
+//StdResult<CosmosMsg>
+fn handle_swap_transfers(nft_sender:&Addr,nft_receiver: &Addr,details:CW721Swap) -> StdResult<Vec<CosmosMsg>> {
     
+  
+    let token_transfer_msg = Cw20ExecuteMsg::TransferFrom {
+        owner: nft_receiver.to_string(),
+        recipient:nft_sender.to_string(),
+        amount: details.price
+    };
+    let cw20_callback:CosmosMsg = WasmMsg::Execute {
+        contract_addr: details.payment_token.into(),
+        msg: to_binary(&token_transfer_msg)?,
+        funds: vec![],
+    }.into();
     let nft_transfer_msg = Cw721ExecuteMsg::<Extension>::TransferNft{
         recipient: nft_receiver.to_string(),
         token_id: details.token_id.clone(),
     };
    
-    let cw721_callback = CosmosMsg::Wasm(WasmMsg::Execute {
+    let cw721_callback:CosmosMsg = WasmMsg::Execute {
         contract_addr: details.nft_contract.to_string(),
         msg: to_binary(&nft_transfer_msg)?,
         funds: vec![],
-    });
+    }.into();
     
-    let token_transfer_msg = Cw20ExecuteMsg::TransferFrom {
-        owner: nft_sender.to_string(),
-        recipient:nft_receiver.to_string(),
-        amount: details.price
-    };
-    let cw20_callback = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: details.payment_token.into(),
-        msg: to_binary(&token_transfer_msg)?,
-        funds: vec![],
-    });
-    Ok(vec![SubMsg::new(cw721_callback),SubMsg::new(cw20_callback)])
+    Ok(vec![cw721_callback,cw20_callback])
 }
 
 #[cfg(test)]
