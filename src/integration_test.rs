@@ -1,8 +1,8 @@
 #![cfg(test)]
 
 //use cosmwasm_std::testing::{mock_env, MockApi, MockStorage};
-use cosmwasm_std::{coins, from_binary, Addr,DepsMut, BalanceResponse, BankQuery, Coin, Empty, Uint128};
-use cw20::{Cw20Coin, Cw20Contract, Cw20ExecuteMsg};
+use cosmwasm_std::{to_binary,coins, from_binary, Addr,DepsMut,QueryRequest, BalanceResponse, BankQuery, Coin, Empty, Uint128,StdError, WasmMsg, WasmQuery};
+use cw20::{Cw20Coin, Expiration,Cw20Contract, Cw20ExecuteMsg};
 use cw_multi_test::{App, Contract, ContractWrapper,Executor};
 use cw721_base::{
     msg::ExecuteMsg as Cw721ExecuteMsg, msg::InstantiateMsg as Cw721InstantiateMsg, Extension,
@@ -12,7 +12,8 @@ use cosmwasm_std::testing::{
     mock_dependencies, mock_dependencies_with_balance, mock_env,MockStorage, mock_info,MOCK_CONTRACT_ADDR,
 };
 
-use crate::msg::{ExecuteMsg, ListResponse, InstantiateMsg, QueryMsg};
+use crate::msg::{ExecuteMsg,DetailsResponse,QueryMsg,CreateMsg, ListResponse, InstantiateMsg};
+use serde::{de::DeserializeOwned, Serialize};
 
 fn mock_app() -> App {
 
@@ -97,16 +98,26 @@ fn create_cw20(
     addr
 }
 
-
+pub fn query<M,T>(router: &mut App, target_contract: Addr, msg: M) -> Result<T, StdError>
+    where
+        M: Serialize + DeserializeOwned,
+        T: Serialize + DeserializeOwned,
+    {
+        router.wrap().query(&QueryRequest::Wasm(WasmQuery::Smart {
+            contract_addr: target_contract.to_string(),
+            msg: to_binary(&msg).unwrap(),
+        }))
+    }
 
 // receive cw20 tokens and release upon approval
 #[test]
-fn test_instantiate() {
+fn test_buy() {
     let mut app=mock_app();
     
     let owner = Addr::unchecked("owner");
     let nft_owner=Addr::unchecked("nft_owner");
     let swap=create_swap(&mut app, &owner);
+    let swap_inst=swap.clone();
     let nft= create_cw721(&mut app,&owner); 
     let erc20=create_cw20(
         &mut app,
@@ -128,7 +139,7 @@ fn test_instantiate() {
     let res = app
         .execute_contract(owner.clone(), nft.clone(), &mint_msg, &[])
         .unwrap();
-
+   
     let approve_msg = Cw721ExecuteMsg::Approve::<Extension> {
             spender: swap.to_string(),
             token_id: token_id.clone(),
@@ -137,7 +148,42 @@ fn test_instantiate() {
     app
     .execute_contract(nft_owner.clone(), nft.clone(), &approve_msg, &[])
     .unwrap();
-
+    /**
+    IncreaseAllowance {
+        spender: String,
+        amount: Uint128,
+        expires: Option<Expiration>,
+    },
+    **/
+    let erc20_approve_msg = Cw20ExecuteMsg::IncreaseAllowance  {
+        spender: swap.to_string(),
+        amount:  Uint128::from(100000_u32),
+        expires: None,
+    };
+    app
+    .execute_contract(owner.clone(), erc20.clone(), &erc20_approve_msg, &[])
+    .unwrap();
+    let creation_msg= CreateMsg{ 
+        id:"firstswap".to_string(),
+        contract: Addr::unchecked(swap),
+        payment_token:Addr::unchecked(erc20),
+        token_id:token_id.clone(),    
+        expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),    
+        price:Uint128::from(100000_u32),
+        swap_type:true,
+    };
+    let finish_msg=creation_msg.clone();
+    app
+    .execute_contract(nft_owner.clone(), swap_inst.clone(), &ExecuteMsg::Create(creation_msg), &[])
+    .unwrap();
+    app
+    .execute_contract(owner.clone(), swap_inst.clone(), &ExecuteMsg::Finish(finish_msg), &[])
+    .unwrap();
+    let mut qres:DetailsResponse=query(&mut app,swap_inst.clone(),QueryMsg::Details{id:"firstswap".to_string()}).unwrap();
+    println!("{}",qres.creator);
+    println!("{}",qres.contract);
+    println!("{}",qres.open);
+    assert_eq!(qres.open, false);
 }
 
 

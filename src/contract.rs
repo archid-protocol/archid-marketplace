@@ -8,6 +8,7 @@ use cw721_base::{
     msg::ExecuteMsg as Cw721ExecuteMsg, msg::InstantiateMsg as Cw721InstantiateMsg, Extension,
     MintMsg,Cw721Contract
 };
+
 use crate::error::ContractError;
 use crate::msg::{
     CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg,
@@ -187,7 +188,7 @@ mod tests {
     };
     use cosmwasm_std::{coins, from_binary};
    
-    /*#[test]
+    #[test]
     fn test_instantiate() {
         let mut deps = mock_dependencies();
 
@@ -230,11 +231,11 @@ mod tests {
         execute(deps.as_mut(), mock_env(), info2, ExecuteMsg::Create(creation_msg2)).unwrap();
        // let mut deps = mock_dependencies();
         let mut qres:DetailsResponse=from_binary(&query(deps.as_ref(), mock_env(), QueryMsg::Details{id:"2ndswap".to_string()}).unwrap()).unwrap();
-        println!("{}",qres.creator);
-        println!("{}",qres.contract);
-        println!("{}",qres.open);
+       // println!("{}",qres.creator);
+       // println!("{}",qres.contract);
+        //println!("{}",qres.open);
         assert_eq!(qres.open, true);
     }
-    **/
+    
    
 }
