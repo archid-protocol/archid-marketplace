@@ -124,10 +124,12 @@ pub fn execute_finish(deps: DepsMut,
         if _com!=None{
             return Err(ContractError::Completed {});
         }
+        //let results=handle_swap_transfers(&swap.creator,&info.sender,swap.clone())?;
         let transfer_results= match msg.swap_type{
             true => handle_swap_transfers(&swap.creator,&info.sender,swap.clone())?,
             false=> handle_swap_transfers(&info.sender,&swap.creator,swap.clone())?,
         };
+        
         COMPLETED.update(deps.storage, &msg.id, |existing| match existing {
             None => Ok(true),
             Some(_) => Err(ContractError::AlreadyExists {}),
@@ -172,11 +174,11 @@ fn handle_swap_transfers(nft_sender:&Addr,nft_receiver: &Addr,details:CW721Swap)
         recipient:nft_receiver.to_string(),
         amount: details.price
     };
-    let cw20_callback = WasmMsg::Execute {
+    let cw20_callback = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: details.payment_token.into(),
         msg: to_binary(&token_transfer_msg)?,
         funds: vec![],
-    };
+    });
     Ok(vec![SubMsg::new(cw721_callback),SubMsg::new(cw20_callback)])
 }
 

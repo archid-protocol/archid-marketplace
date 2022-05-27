@@ -166,7 +166,7 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-storage-plus 0.13.2",
- "cw-utils",
+ "cw-utils 0.13.2",
  "derivative",
  "itertools",
  "prost",
@@ -195,6 +195,18 @@ dependencies = [
  "cosmwasm-std",
  "schemars",
  "serde",
+]
+
+[[package]]
+name = "cw-utils"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef842a1792e4285beff7b3b518705f760fa4111dc1e296e53f3e92d1ef7f6220"
+dependencies = [
+ "cosmwasm-std",
+ "schemars",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -240,7 +252,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "356d364602c5fe763544ea00d485b825d6ef519a2fc6a3145528d7df3a603f40"
 dependencies = [
  "cosmwasm-std",
- "cw-utils",
+ "cw-utils 0.13.2",
  "schemars",
  "serde",
 ]
@@ -253,7 +265,7 @@ checksum = "3b370e5fb6b35db58cabd7903b8f9bd4c3bcff701c63bf1a7185a84e60bfa502"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 0.13.2",
- "cw-utils",
+ "cw-utils 0.13.2",
  "cw2 0.13.2",
  "cw20",
  "schemars",
@@ -263,12 +275,24 @@ dependencies = [
 
 [[package]]
 name = "cw721"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7301f04d949f3aefb5bd57a4740285fa98b65280ac6862c5e7c53a83c806af3e"
+dependencies = [
+ "cosmwasm-std",
+ "cw-utils 0.11.1",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "cw721"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b9fd71276795554c35899bb3a378561ed0c288d231113e9915f6ee1f42b7b5"
 dependencies = [
  "cosmwasm-std",
- "cw-utils",
+ "cw-utils 0.13.2",
  "schemars",
  "serde",
 ]
@@ -281,9 +305,9 @@ checksum = "b61200af4e027af2d7485dbdc37c2a9c4093b6b2f2b811732329ef456076f97e"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 0.13.2",
- "cw-utils",
+ "cw-utils 0.13.2",
  "cw2 0.13.2",
- "cw721",
+ "cw721 0.13.2",
  "schemars",
  "serde",
  "thiserror",
@@ -704,6 +728,7 @@ dependencies = [
  "cw2 0.12.1",
  "cw20",
  "cw20-base",
+ "cw721 0.11.1",
  "cw721-base",
  "schemars",
  "serde",

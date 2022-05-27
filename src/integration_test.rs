@@ -1,12 +1,17 @@
 #![cfg(test)]
 
 //use cosmwasm_std::testing::{mock_env, MockApi, MockStorage};
-use cosmwasm_std::{to_binary,coins, from_binary, Addr,DepsMut,QueryRequest, BalanceResponse, BankQuery, Coin, Empty, Uint128,StdError, WasmMsg, WasmQuery};
-use cw20::{Cw20Coin, Expiration,Cw20Contract, Cw20ExecuteMsg};
+use cosmwasm_std::{to_binary,coins, from_binary, Addr,DepsMut,QueryRequest,BankQuery, Coin, Empty, Uint128,StdError, WasmMsg, WasmQuery};
+use cw20::{Cw20Coin,BalanceResponse, Expiration,Cw20Contract,Cw20QueryMsg, Cw20ExecuteMsg};
 use cw_multi_test::{App, Contract, ContractWrapper,Executor};
 use cw721_base::{
     msg::ExecuteMsg as Cw721ExecuteMsg, msg::InstantiateMsg as Cw721InstantiateMsg, Extension,
-    MintMsg,Cw721Contract
+    MintMsg,Cw721Contract,msg::QueryMsg as Cw721QueryMsg
+};
+use cw721::{
+    AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, CustomMsg,
+    Cw721Query,NftInfoResponse, NumTokensResponse, OperatorsResponse, OwnerOfResponse,
+    TokensResponse,
 };
 use cosmwasm_std::testing::{
     mock_dependencies, mock_dependencies_with_balance, mock_env,MockStorage, mock_info,MOCK_CONTRACT_ADDR,
@@ -126,6 +131,7 @@ fn test_buy() {
         "tscw".to_string(),
         Uint128::from(100000_u32)
     );
+    let erc20_inst=erc20.clone();
     let token_id = "petrify".to_string();
     let token_uri = "https://www.merriam-webster.com/dictionary/petrify".to_string();
 
@@ -148,6 +154,7 @@ fn test_buy() {
     app
     .execute_contract(nft_owner.clone(), nft.clone(), &approve_msg, &[])
     .unwrap();
+    
     /**
     IncreaseAllowance {
         spender: String,
@@ -184,6 +191,10 @@ fn test_buy() {
     println!("{}",qres.contract);
     println!("{}",qres.open);
     assert_eq!(qres.open, false);
+    let mut new_owner:OwnerOfResponse=query(&mut app,nft.clone(),Cw721QueryMsg::OwnerOf{token_id:token_id, include_expired:None}).unwrap();
+    println!("{}",new_owner.owner);
+    let mut new_balance:BalanceResponse=query(&mut app,erc20_inst,Cw20QueryMsg::Balance{address:nft_owner.to_string()}).unwrap();
+   println!("{:?}",new_balance);
 }
 
 
