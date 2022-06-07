@@ -8,13 +8,14 @@ use cw721_base::{
     msg::ExecuteMsg as Cw721ExecuteMsg, msg::InstantiateMsg as Cw721InstantiateMsg, Extension,
     MintMsg,Cw721Contract
 };
+use cw_storage_plus::Bound;
 
 use crate::error::ContractError;
 use crate::msg::{
-    CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg,
+    CreateMsg, DetailsResponse,ListResponse, ExecuteMsg, InstantiateMsg,
      QueryMsg,CancelMsg
 };
-use crate::state::{ CW721Swap,SWAPS,CANCELLED,COMPLETED};
+use crate::state::{ CW721Swap,SWAPS,CANCELLED,COMPLETED,all_swap_ids};
 //pub type Extension = Option<Empty>;
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:test";
@@ -49,7 +50,7 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        //QueryMsg::List { start_after, limit } => to_binary(&query_list(deps, start_after, limit)?),
+        QueryMsg::List { start_after, limit } => to_binary(&query_list(deps, start_after, limit)?),
         QueryMsg::Details { id } => to_binary(&query_details(deps, id)?)
     }
 }
@@ -76,6 +77,22 @@ fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
     };
     Ok(details)
 }
+const MAX_LIMIT: u32 = 30;
+const DEFAULT_LIMIT: u32 = 10;
+
+fn query_list(
+    deps: Deps,
+    start_after: Option<String>,
+    limit: Option<u32>,
+) -> StdResult<ListResponse> {
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+    let start = start_after.as_ref().map(|s| Bound::exclusive(s.as_str()));
+
+    Ok(ListResponse {
+        swaps: all_swap_ids(deps.storage, start, limit)?,
+    })
+}
+
 pub fn execute_create(
     deps: DepsMut,
     env: Env,

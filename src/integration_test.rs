@@ -187,14 +187,14 @@ fn test_buy() {
     .execute_contract(owner.clone(), swap_inst.clone(), &ExecuteMsg::Finish(finish_msg), &[])
     .unwrap();
     let mut qres:DetailsResponse=query(&mut app,swap_inst.clone(),QueryMsg::Details{id:"firstswap".to_string()}).unwrap();
-    println!("{}",qres.creator);
-    println!("{}",qres.contract);
-    println!("{}",qres.open);
-    assert_eq!(qres.open, false);
+   
     let mut new_owner:OwnerOfResponse=query(&mut app,nft.clone(),Cw721QueryMsg::OwnerOf{token_id:token_id, include_expired:None}).unwrap();
-    println!("{}",new_owner.owner);
+    
     let mut new_balance:BalanceResponse=query(&mut app,erc20_inst,Cw20QueryMsg::Balance{address:nft_owner.to_string()}).unwrap();
-   println!("{:?}",new_balance);
+   
+    assert_eq!(qres.open, false);
+    assert_eq!(new_owner.owner, owner);
+    assert_eq!(new_balance.balance, Uint128::from(100000_u32));
 }
 
 
