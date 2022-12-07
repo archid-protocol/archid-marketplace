@@ -53,5 +53,6 @@ schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = "1.0"
 cw-multi-test = "0.13.2"
+
 [dev-dependencies]
 cosmwasm-schema = "1.0.0-beta5"

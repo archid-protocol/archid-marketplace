@@ -1,10 +1,12 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use cw_storage_plus::{Bound, Map};
 
-use cw_storage_plus::Item;
-use cw20::{Balance, Expiration};
-use cosmwasm_std::{Binary, Coin, Decimal,BlockInfo,Addr, Uint128};
+use cosmwasm_std::{
+    BlockInfo, Addr, Uint128,
+};
+use cw_storage_plus::Map;
+
+use cw20::Expiration;
 
 // swap type of true equals offer, swap type of false equals buy
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema)]

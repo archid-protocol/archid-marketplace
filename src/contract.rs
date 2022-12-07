@@ -1,21 +1,23 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, CosmosMsg,Binary, Deps,BankMsg, DepsMut,Uint128, Env, MessageInfo, Response, StdResult,Addr,WasmMsg, SubMsg};
-use cw2::set_contract_version;
-use cosmwasm_std::Empty;
-use cw20::{Balance,Cw20Coin, Expiration,Cw20ExecuteMsg,Cw20Contract};
-use cw721_base::{
-    msg::ExecuteMsg as Cw721ExecuteMsg, msg::InstantiateMsg as Cw721InstantiateMsg, Extension,
-    MintMsg,Cw721Contract
+use cosmwasm_std::{
+    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Addr, StdResult, Response, 
+    CosmosMsg, WasmMsg,
+};
+use crate::error::ContractError;
+
+use cw20::Cw20ExecuteMsg;
+use cw721_base::{ 
+    msg::ExecuteMsg as Cw721ExecuteMsg, Extension, 
 };
 
-use crate::error::ContractError;
 use crate::msg::{
-    CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg,
-     QueryMsg,CancelMsg
+    CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg, QueryMsg, CancelMsg,
 };
-use crate::state::{ CW721Swap,SWAPS,CANCELLED,COMPLETED};
-//pub type Extension = Option<Empty>;
+use crate::state::{ CW721Swap, SWAPS, CANCELLED, COMPLETED, };
+
+use cw2::set_contract_version;
+
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:test";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -24,11 +26,10 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
-    info: MessageInfo,
-    msg: InstantiateMsg,
+    _info: MessageInfo,
+    _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {    
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    
     Ok(Response::new())       
 }
 
@@ -43,7 +44,6 @@ pub fn execute(
         ExecuteMsg::Create(msg) =>{execute_create(deps,_env,info,msg)},
         ExecuteMsg::Finish(msg) =>{execute_finish(deps,_env,info,msg)},
         ExecuteMsg::Cancel(msg) =>{execute_cancel(deps,_env,info,msg)}
-       // ExecuteMsg::Cancel { id } => try_reset(deps, info, id),
     }
 }
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -57,22 +57,24 @@ fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
     let swap = SWAPS.load(deps.storage, &id)?;
 
     // Convert balance to human balance
-    let mut available:bool=true;
-    let _can = CANCELLED.may_load(deps.storage, &id)?;
-    let _com=  COMPLETED.may_load(deps.storage,&id)?;
+    let mut available: bool = true;
+    let can = CANCELLED.may_load(deps.storage, &id)?;
+    let com =  COMPLETED.may_load(deps.storage,&id)?;
 
-    available=!(_can!=None || _com!=None);
-    
-    
+    // available =! (_can!=None || _com!=None);
+    if can.is_none() || com.is_none() {
+        available = false;
+    }
+
     let details = DetailsResponse{
-        creator:swap.creator,
-        contract:swap.nft_contract,
-        payment_token:swap.payment_token,
-        token_id:swap.token_id,    
-        expires:swap.expires,    
-        price:swap.price,
-        swap_type:swap.swap_type,
-        open:available
+        creator: swap.creator,
+        contract: swap.nft_contract,
+        payment_token: swap.payment_token,
+        token_id: swap.token_id,    
+        expires: swap.expires,    
+        price: swap.price,
+        swap_type: swap.swap_type,
+        open: available.clone(),
     };
     Ok(details)
 }
@@ -141,7 +143,7 @@ pub fn execute_finish(deps: DepsMut,
     }
 
 pub fn execute_cancel(deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     msg: CancelMsg)-> Result<Response, ContractError> {
         let res = Response::new();
@@ -156,7 +158,6 @@ pub fn execute_cancel(deps: DepsMut,
         Ok(res)
     }
 
-//StdResult<CosmosMsg>
 fn handle_swap_transfers(nft_sender:&Addr,nft_receiver: &Addr,details:CW721Swap) -> StdResult<Vec<CosmosMsg>> {
     
   
@@ -188,9 +189,12 @@ fn handle_swap_transfers(nft_sender:&Addr,nft_receiver: &Addr,details:CW721Swap)
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_dependencies_with_balance, mock_env, mock_info,MOCK_CONTRACT_ADDR,
+        mock_dependencies, mock_env, mock_info, MOCK_CONTRACT_ADDR,
     };
-    use cosmwasm_std::{coins, from_binary};
+    use cosmwasm_std::{
+        from_binary, Uint128,
+    };
+    use cw20::Expiration;
    
     #[test]
     fn test_instantiate() {
@@ -233,13 +237,18 @@ mod tests {
         };
         let  info2 = mock_info("anyone", &[]);
         execute(deps.as_mut(), mock_env(), info2, ExecuteMsg::Create(creation_msg2)).unwrap();
-       // let mut deps = mock_dependencies();
-        let mut qres:DetailsResponse=from_binary(&query(deps.as_ref(), mock_env(), QueryMsg::Details{id:"2ndswap".to_string()}).unwrap()).unwrap();
-       // println!("{}",qres.creator);
-       // println!("{}",qres.contract);
-        //println!("{}",qres.open);
+        
+        let qres: DetailsResponse = from_binary(
+            &query(
+                deps.as_ref(), 
+                mock_env(), 
+                QueryMsg::Details { id:"2ndswap".to_string() }
+            ).unwrap()
+        ).unwrap();
+        
+        println!("{}",qres.creator);
+        println!("{}",qres.contract);
+        println!("{}",qres.open);
         assert_eq!(qres.open, true);
     }
-    
-   
 }
