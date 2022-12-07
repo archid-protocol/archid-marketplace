@@ -36,11 +36,11 @@ pub struct CreateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     /// Show all open swaps. Return type is ListResponse.
-    /*List {
+    List {
         start_after: Option<String>,
         limit: Option<u32>,
     },
-    */
+    
     /// Returns the details of the named swap, error if not created.
     /// Return type: DetailsResponse.
     Details { id: String },
@@ -49,6 +49,7 @@ pub enum QueryMsg {
 // We define a custom struct for each query response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ListResponse {
+    pub swaps: Vec<String>,
 }
 // We define a custom struct for each query response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

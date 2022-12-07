@@ -153,67 +153,61 @@ fn test_buy() {
     app
     .execute_contract(nft_owner.clone(), nft.clone(), &nft_approve_msg, &[])
     .unwrap();
-    
-    // IncreaseAllowance {
-    //     spender: String,
-    //     amount: Uint128,
-    //     expires: Option<Expiration>,
-    // },
-    let erc20_approve_msg = Cw20ExecuteMsg::IncreaseAllowance  {
+
+    let cw20_approve_msg = Cw20ExecuteMsg::IncreaseAllowance  {
         spender: swap.to_string(),
         amount:  Uint128::from(100000_u32),
         expires: None,
     };
+
     app
-    .execute_contract(owner.clone(), erc20.clone(), &erc20_approve_msg, &[])
+    .execute_contract(owner.clone(), erc20.clone(), &cw20_approve_msg, &[])
     .unwrap();
-    let creation_msg= CreateMsg{ 
-        id:"firstswap".to_string(),
+    
+    let creation_msg = CreateMsg { 
+        id: "firstswap".to_string(),
         contract: Addr::unchecked(nft.clone()),
-        payment_token:Addr::unchecked(erc20),
-        token_id:token_id.clone(),    
-        expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),    
-        price:Uint128::from(100000_u32),
-        swap_type:true,
+        payment_token: Addr::unchecked(erc20),
+        token_id: token_id.clone(),    
+        expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),  
+        price: Uint128::from(100000_u32),
+        swap_type: true,
     };
-    let finish_msg=creation_msg.clone();
+    
+    let finish_msg = creation_msg.clone();
+
     app
-    .execute_contract(nft_owner.clone(), swap_inst.clone(), &ExecuteMsg::Create(creation_msg), &[])
-    .unwrap();
+        .execute_contract(nft_owner.clone(), swap_inst.clone(), &ExecuteMsg::Create(creation_msg), &[])
+        .unwrap();
     app
-    .execute_contract(owner.clone(), swap_inst.clone(), &ExecuteMsg::Finish(finish_msg), &[])
-    .unwrap();
+        .execute_contract(owner.clone(), swap_inst.clone(), &ExecuteMsg::Finish(finish_msg), &[])
+        .unwrap();
     
     let qres: DetailsResponse = query(
         &mut app,
         swap_inst.clone(),
-        QueryMsg::Details{ 
-            id:"firstswap".to_string()
+        QueryMsg::Details{
+            id: "firstswap".to_string()
         }
     ).unwrap();
     
-    println!("{}",qres.creator);
-    println!("{}",qres.contract);
-    println!("{}",qres.open);
-    assert_eq!(qres.open, false);
-    
     let new_owner: OwnerOfResponse = query(
         &mut app,nft.clone(),
-        Cw721QueryMsg::OwnerOf { 
-            token_id:token_id, 
+        Cw721QueryMsg::OwnerOf {
+            token_id: token_id, 
             include_expired: None
         }
     ).unwrap();
     
-    println!("{}",new_owner.owner);
-
-    let new_balance: BalanceResponse = query(
+    let new_balance: BalanceResponse =query(
         &mut app,
         erc20_inst,
-        Cw20QueryMsg::Balance{
-            address:nft_owner.to_string()
+        Cw20QueryMsg::Balance {
+            address: nft_owner.to_string()
         }
     ).unwrap();
-    
-    println!("{:?}",new_balance);
+   
+    assert_eq!(qres.open, false);
+    assert_eq!(new_owner.owner, owner);
+    assert_eq!(new_balance.balance, Uint128::from(100000_u32));
 }

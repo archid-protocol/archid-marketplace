@@ -2,11 +2,13 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    BlockInfo, Addr, Uint128,
+    BlockInfo, Addr, Order, Uint128, Storage, StdResult,
 };
-use cw_storage_plus::Map;
+use cw_storage_plus::{ 
+    Map, Bound,
+};
 
-use cw20::Expiration;
+use cw20::{Expiration};
 
 // swap type of true equals offer, swap type of false equals buy
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema)]
@@ -19,7 +21,16 @@ pub struct CW721Swap {
     pub price: Uint128,
     pub swap_type:bool,
 }
-
+pub fn all_swap_ids<'a>(
+    storage: &dyn Storage,
+    start: Option<Bound<'a, &'a str>>,
+    limit: usize,
+) -> StdResult<Vec<String>> {
+    SWAPS
+        .keys(storage, start, None, Order::Ascending)
+        .take(limit)
+        .collect()
+}
 
 impl CW721Swap {
     pub fn is_expired(&self, block: &BlockInfo) -> bool {
