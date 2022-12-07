@@ -57,14 +57,10 @@ fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
     let swap = SWAPS.load(deps.storage, &id)?;
 
     // Convert balance to human balance
-    let mut available: bool = true;
-    let can = CANCELLED.may_load(deps.storage, &id)?;
-    let com =  COMPLETED.may_load(deps.storage,&id)?;
+    let _can = CANCELLED.may_load(deps.storage, &id)?;
+    let _com =  COMPLETED.may_load(deps.storage,&id)?;
 
-    // available =! (_can!=None || _com!=None);
-    if can.is_none() || com.is_none() {
-        available = false;
-    }
+    let available: bool =! (_can!=None || _com!=None);
 
     let details = DetailsResponse{
         creator: swap.creator,
@@ -215,27 +211,33 @@ mod tests {
         let info = mock_info("anyone", &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
         assert_eq!(0, res.messages.len());
-        let creation_msg= CreateMsg{ 
-            id:"firstswap".to_string(),
+
+        let creation_msg = CreateMsg {
+            id: "firstswap".to_string(),
             contract: Addr::unchecked(MOCK_CONTRACT_ADDR),
-            payment_token:Addr::unchecked(MOCK_CONTRACT_ADDR),
-            token_id:"2343".to_string(),    
+            payment_token: Addr::unchecked(MOCK_CONTRACT_ADDR),
+            token_id: "2343".to_string(),    
             expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),    
-            price:Uint128::from(100000_u32),
-            swap_type:true,
+            price: Uint128::from(100000_u32),
+            swap_type: true,
         };
+        
         let  info2 = mock_info("someone", &[]);
+
         execute(deps.as_mut(), mock_env(), info2, ExecuteMsg::Create(creation_msg)).unwrap();
-        let creation_msg2= CreateMsg{ 
-            id:"2ndswap".to_string(),
+
+        let creation_msg2 = CreateMsg{ 
+            id: "2ndswap".to_string(),
             contract: Addr::unchecked(MOCK_CONTRACT_ADDR),
-            payment_token:Addr::unchecked(MOCK_CONTRACT_ADDR),
-            token_id:"2343".to_string(),    
+            payment_token: Addr::unchecked(MOCK_CONTRACT_ADDR),
+            token_id: "2343".to_string(),    
             expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),    
-            price:Uint128::from(100000_u32),
-            swap_type:true,
+            price: Uint128::from(100000_u32),
+            swap_type: true,
         };
+
         let  info2 = mock_info("anyone", &[]);
+
         execute(deps.as_mut(), mock_env(), info2, ExecuteMsg::Create(creation_msg2)).unwrap();
         
         let qres: DetailsResponse = from_binary(
@@ -246,9 +248,9 @@ mod tests {
             ).unwrap()
         ).unwrap();
         
-        println!("{}",qres.creator);
-        println!("{}",qres.contract);
-        println!("{}",qres.open);
+        println!("{}", qres.creator);
+        println!("{}", qres.contract);
+        println!("{}", qres.open);
         assert_eq!(qres.open, true);
     }
 }
