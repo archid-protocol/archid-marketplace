@@ -140,7 +140,7 @@ pub fn execute_finish(deps: DepsMut,
         if _com!=None{
             return Err(ContractError::Completed {});
         }
-        //let transfer_results=handle_swap_transfers(&info.sender,&swap.creator,swap.clone())?;
+        
         let transfer_results= match msg.swap_type{
             true => handle_swap_transfers(&swap.creator,&info.sender,swap.clone())?,
             false=> handle_swap_transfers(&info.sender,&swap.creator,swap.clone())?,
