@@ -16,7 +16,9 @@ use crate::msg::{
     CancelMsg, CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg, 
     QueryMsg, ListResponse, MigrateMsg,
 };
-use crate::state::{ CW721Swap, SWAPS, CANCELLED, COMPLETED, all_swap_ids, };
+use crate::state::{ 
+    all_swap_ids, CANCELLED, COMPLETED, Config, CONFIG, CW721Swap, SWAPS,
+};
 
 use cw2::{get_contract_version, set_contract_version};
 
@@ -29,10 +31,18 @@ pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    _msg: InstantiateMsg,
+    msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {    
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    Ok(Response::new())       
+
+    let config = Config {
+        cw721: msg.cw721.clone(),
+    };
+    CONFIG.save(deps.storage, &config)?;
+    
+    Ok(Response::new()
+        .add_attribute("action", "instantiate")
+        .add_attribute("cw721", msg.cw721))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -122,79 +132,94 @@ pub fn execute_create(
     env: Env,
     info: MessageInfo,
     msg: CreateMsg,
-    ) -> Result<Response, ContractError> {
-        if msg.expires.is_expired(&env.block) {
-            return Err(ContractError::Expired {});
-        }
+) -> Result<Response, ContractError> {
+    if msg.expires.is_expired(&env.block) {
+        return Err(ContractError::Expired {});
+    }
 
-       // let recipient = deps.api.addr_validate(&msg.recipient)?;
-        let swap = CW721Swap {
-            creator:info.sender,
-            nft_contract:msg.contract,
-            payment_token:msg.payment_token,
-            token_id:msg.token_id,    
-            expires:msg.expires,    
-            price:msg.price,
-            swap_type:msg.swap_type, 
-        };
+    let config = CONFIG.load(deps.storage)?;
 
-        // Try to store it, fail if the id already exists (unmodifiable swaps)
-        SWAPS.update(deps.storage, &msg.id, |existing| match existing {
-            None => Ok(swap),
-            Some(_) => Err(ContractError::AlreadyExists {}),
-        })?;
+    let swap = CW721Swap {
+        creator:info.sender,
+        nft_contract: config.cw721,
+        payment_token: msg.payment_token,
+        token_id: msg.token_id,    
+        expires: msg.expires,    
+        price: msg.price,
+        swap_type: msg.swap_type,
+    };
 
-        let res = Response::new();
+    // Try to store it, fail if the id already exists (unmodifiable swaps)
+    SWAPS.update(deps.storage, &msg.id, |existing| match existing {
+        None => Ok(swap.clone()),
+        Some(_) => Err(ContractError::AlreadyExists {}),
+    })?;
 
-        Ok(res)
+    Ok(Response::new()
+        .add_attribute("action", "create")
+        .add_attribute("token_id", swap.token_id)
+        .add_attribute("payment_token", swap.payment_token)
+        .add_attribute("price", swap.price))
 }
+
+// pub fn execute_create_default(
+//     deps: DepsMut,
+//     env: Env,
+//     info: MessageInfo,
+//     msg: CreateDefaultMsg,
+// )-> Result<Response, ContractError> {
+
+// }
+
 pub fn execute_finish(deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: CreateMsg)-> Result<Response, ContractError> {
-        let swap = SWAPS.load(deps.storage, &msg.id)?;
-        let can = CANCELLED.may_load(deps.storage, &msg.id)?;
-        let com =  COMPLETED.may_load(deps.storage,&msg.id)?;
+    msg: CreateMsg
+)-> Result<Response, ContractError> {
+    let swap = SWAPS.load(deps.storage, &msg.id)?;
+    let can = CANCELLED.may_load(deps.storage, &msg.id)?;
+    let com =  COMPLETED.may_load(deps.storage,&msg.id)?;
 
-        if msg.expires.is_expired(&env.block) {
-            return Err(ContractError::Expired {});
-        }
-        if can.is_some() {
-            return Err(ContractError::Cancelled {});
-        }
-        if com.is_some() {
-            return Err(ContractError::Completed {});
-        }
-
-        let transfer_results= match msg.swap_type{
-            true => handle_swap_transfers(&swap.creator,&info.sender,swap.clone())?,
-            false=> handle_swap_transfers(&info.sender,&swap.creator,swap.clone())?,
-        };
-
-        COMPLETED.update(deps.storage, &msg.id, |existing| match existing {
-            None => Ok(true),
-            Some(_) => Err(ContractError::AlreadyExists {}),
-        })?;
-
-        let res = Response::new().add_messages(transfer_results);
-        Ok(res)
+    if msg.expires.is_expired(&env.block) {
+        return Err(ContractError::Expired {});
     }
+    if can.is_some() {
+        return Err(ContractError::Cancelled {});
+    }
+    if com.is_some() {
+        return Err(ContractError::Completed {});
+    }
+
+    let transfer_results= match msg.swap_type{
+        true => handle_swap_transfers(&swap.creator,&info.sender,swap.clone())?,
+        false=> handle_swap_transfers(&info.sender,&swap.creator,swap.clone())?,
+    };
+
+    COMPLETED.update(deps.storage, &msg.id, |existing| match existing {
+        None => Ok(true),
+        Some(_) => Err(ContractError::AlreadyExists {}),
+    })?;
+
+    let res = Response::new().add_messages(transfer_results);
+    Ok(res)
+}
 
 pub fn execute_cancel(deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    msg: CancelMsg)-> Result<Response, ContractError> {
-        let res = Response::new();
-        let swap = SWAPS.load(deps.storage, &msg.id)?;
-        if info.sender!=swap.creator{
-            return Err(ContractError::Unauthorized {});
-        }
-        CANCELLED.update(deps.storage, &msg.id, |existing| match existing {
-            None => Ok(true),
-            Some(_) => Err(ContractError::AlreadyExists {}),
-        })?;
-        Ok(res)
+    msg: CancelMsg
+)-> Result<Response, ContractError> {
+    let res = Response::new();
+    let swap = SWAPS.load(deps.storage, &msg.id)?;
+    if info.sender!=swap.creator{
+        return Err(ContractError::Unauthorized {});
     }
+    CANCELLED.update(deps.storage, &msg.id, |existing| match existing {
+        None => Ok(true),
+        Some(_) => Err(ContractError::AlreadyExists {}),
+    })?;
+    Ok(res)
+}
 
 fn handle_swap_transfers(nft_sender:&Addr,nft_receiver: &Addr,details:CW721Swap) -> StdResult<Vec<CosmosMsg>> {
     let token_transfer_msg = Cw20ExecuteMsg::TransferFrom {
@@ -237,7 +262,9 @@ mod tests {
         let mut deps = mock_dependencies();
 
         // Instantiate an empty contract
-        let instantiate_msg = InstantiateMsg {};
+        let instantiate_msg = InstantiateMsg {
+            cw721: Addr::unchecked(MOCK_CONTRACT_ADDR),
+        };
         let info = mock_info("anyone", &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
         assert_eq!(0, res.messages.len());
@@ -247,14 +274,15 @@ mod tests {
         let mut deps = mock_dependencies();
 
         // Instantiate an empty contract
-        let instantiate_msg = InstantiateMsg {};
+        let instantiate_msg = InstantiateMsg {
+            cw721: Addr::unchecked(MOCK_CONTRACT_ADDR),
+        };
         let info = mock_info("anyone", &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         let creation_msg = CreateMsg {
             id: "firstswap".to_string(),
-            contract: Addr::unchecked(MOCK_CONTRACT_ADDR),
             payment_token: Addr::unchecked(MOCK_CONTRACT_ADDR),
             token_id: "2343".to_string(),    
             expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),    
@@ -268,7 +296,6 @@ mod tests {
 
         let creation_msg2 = CreateMsg{ 
             id: "2ndswap".to_string(),
-            contract: Addr::unchecked(MOCK_CONTRACT_ADDR),
             payment_token: Addr::unchecked(MOCK_CONTRACT_ADDR),
             token_id: "2343".to_string(),    
             expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),    

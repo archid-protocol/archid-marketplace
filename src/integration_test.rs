@@ -49,10 +49,11 @@ pub fn contract_cw721() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
-fn create_swap(router: &mut App, owner: &Addr ) -> Addr {
+fn create_swap(router: &mut App, owner: &Addr, cw721: Addr) -> Addr {
     
     let swap_id = router.store_code(contract_swap721());
-    let msg = InstantiateMsg {      
+    let msg = InstantiateMsg {
+        cw721: cw721,  
     };
     let swap_addr = router
         .instantiate_contract(swap_id, owner.clone(), &msg, &[], "swap721",None)
@@ -115,21 +116,21 @@ pub fn query<M,T>(router: &mut App, target_contract: Addr, msg: M) -> Result<T, 
 // receive cw20 tokens and release upon approval
 #[test]
 fn test_buy() {
-    let mut app=mock_app();
+    let mut app = mock_app();
     
     let owner = Addr::unchecked("owner");
-    let nft_owner=Addr::unchecked("nft_owner");
-    let swap=create_swap(&mut app, &owner);
-    let swap_inst=swap.clone();
-    let nft= create_cw721(&mut app,&owner); 
-    let erc20=create_cw20(
+    let nft_owner = Addr::unchecked("nft_owner");
+    let nft = create_cw721(&mut app, &owner);
+    let swap = create_swap(&mut app, &owner, nft.clone());
+    let swap_inst = swap.clone();
+    let erc20 = create_cw20(
         &mut app,
         &owner,
         "testcw".to_string(),
         "tscw".to_string(),
         Uint128::from(100000_u32)
     );
-    let erc20_inst=erc20.clone();
+    let erc20_inst = erc20.clone();
     let token_id = "petrify".to_string();
     let token_uri = "https://www.merriam-webster.com/dictionary/petrify".to_string();
 
@@ -166,7 +167,6 @@ fn test_buy() {
     
     let creation_msg = CreateMsg { 
         id: "firstswap".to_string(),
-        contract: Addr::unchecked(nft.clone()),
         payment_token: Addr::unchecked(erc20),
         token_id: token_id.clone(),    
         expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),  
