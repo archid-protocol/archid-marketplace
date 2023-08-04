@@ -116,7 +116,7 @@ pub fn query<M,T>(router: &mut App, target_contract: Addr, msg: M) -> Result<T, 
 
 // Receive cw20 tokens and release upon approval
 #[test]
-fn test_buy() {
+fn test_buy_cw20() {
     let mut app = mock_app();
     
     // Swap owner deploys
@@ -231,7 +231,7 @@ fn test_buy() {
 
 // cw721 buyer must send correct cw20 amount
 #[test]
-fn test_invalid_payment() {
+fn test_invalid_payment_cw20() {
     let mut app = mock_app();
     
     // Swap owner deploys
@@ -337,7 +337,7 @@ fn test_invalid_payment() {
 // cw721 buyer increases payment allowance too high
 // but correct payment for swap is still enforced
 #[test]
-fn test_overpayment() {
+fn test_overpayment_cw20() {
     let mut app = mock_app();
     
     // Swap owner deploys
