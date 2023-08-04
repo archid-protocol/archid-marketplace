@@ -275,29 +275,19 @@ fn handle_swap_transfers(
     details: CW721Swap
 ) -> StdResult<Vec<CosmosMsg>> {
     // cw20 swap
-    if details.payment_token.is_some() {
+    let payment_callback: CosmosMsg = if details.payment_token.is_some() {
         let token_transfer_msg = Cw20ExecuteMsg::TransferFrom {
             owner: nft_receiver.to_string(),
             recipient: nft_sender.to_string(),
             amount: details.price
         };
+
         let cw20_callback: CosmosMsg = WasmMsg::Execute {
             contract_addr: details.payment_token.unwrap().into(),
             msg: to_binary(&token_transfer_msg)?,
             funds: vec![],
         }.into();
-        let nft_transfer_msg = Cw721ExecuteMsg::<Extension>::TransferNft {
-            recipient: nft_receiver.to_string(),
-            token_id: details.token_id.clone(),
-        };
-       
-        let cw721_callback:CosmosMsg = WasmMsg::Execute {
-            contract_addr: details.nft_contract.to_string(),
-            msg: to_binary(&nft_transfer_msg)?,
-            funds: vec![],
-        }.into();
-        
-        Ok(vec![cw721_callback, cw20_callback])
+        cw20_callback
     // aarch swap
     } else {
         let aarch_transfer_msg = BankMsg::Send {
@@ -309,20 +299,21 @@ fn handle_swap_transfers(
         };
 
         let aarch_callback: CosmosMsg = cosmwasm_std::CosmosMsg::Bank(aarch_transfer_msg);
+        aarch_callback
+    };
 
-        let nft_transfer_msg = Cw721ExecuteMsg::<Extension>::TransferNft {
-            recipient: nft_receiver.to_string(),
-            token_id: details.token_id.clone(),
-        };
-       
-        let cw721_callback:CosmosMsg = WasmMsg::Execute {
-            contract_addr: details.nft_contract.to_string(),
-            msg: to_binary(&nft_transfer_msg)?,
-            funds: vec![],
-        }.into();
+    let nft_transfer_msg = Cw721ExecuteMsg::<Extension>::TransferNft {
+        recipient: nft_receiver.to_string(),
+        token_id: details.token_id.clone(),
+    };
+   
+    let cw721_callback:CosmosMsg = WasmMsg::Execute {
+        contract_addr: details.nft_contract.to_string(),
+        msg: to_binary(&nft_transfer_msg)?,
+        funds: vec![],
+    }.into();
 
-        Ok(vec![cw721_callback, aarch_callback])
-    }
+    Ok(vec![cw721_callback, payment_callback])
 }
 
 pub fn check_sent_required_payment(
