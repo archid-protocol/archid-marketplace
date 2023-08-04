@@ -1,8 +1,7 @@
 #[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Addr, StdResult, Response, 
-    CosmosMsg, WasmMsg,
+    Addr, Binary, CosmosMsg, Deps, DepsMut, entry_point, Env, MessageInfo, 
+    Reply, Response, StdResult, SubMsgResult, to_binary, WasmMsg,
 };
 use cw_storage_plus::Bound;
 
@@ -14,14 +13,15 @@ use cw721_base::{
 };
 
 use crate::msg::{
-    CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg, QueryMsg, CancelMsg, ListResponse
+    CancelMsg, CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg, 
+    QueryMsg, ListResponse, MigrateMsg,
 };
 use crate::state::{ CW721Swap, SWAPS, CANCELLED, COMPLETED, all_swap_ids, };
 
-use cw2::set_contract_version;
+use cw2::{get_contract_version, set_contract_version};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:test";
+const CONTRACT_NAME: &str = "crates.io:archid-marketplace";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -48,6 +48,7 @@ pub fn execute(
         ExecuteMsg::Cancel(msg) =>{execute_cancel(deps,_env,info,msg)}
     }
 }
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
@@ -55,14 +56,38 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Details { id } => to_binary(&query_details(deps, id)?)
     }
 }
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn reply(_deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
+    match msg.result {
+        SubMsgResult::Ok(_) => Ok(Response::default()),
+        SubMsgResult::Err(_) => Err(ContractError::Unauthorized {}),
+    }
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    let original_version = get_contract_version(deps.storage)?;
+    let name = CONTRACT_NAME.to_string();
+    let version = CONTRACT_VERSION.to_string();
+    if original_version.contract != name {
+        return Err(ContractError::InvalidInput {});
+    }
+    if original_version.version >= version {
+        return Err(ContractError::InvalidInput {});
+    }
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    Ok(Response::default())
+}
+
 fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
     let swap = SWAPS.load(deps.storage, &id)?;
 
     // Convert balance to human balance
-    let _can = CANCELLED.may_load(deps.storage, &id)?;
-    let _com =  COMPLETED.may_load(deps.storage,&id)?;
+    let can = CANCELLED.may_load(deps.storage, &id)?;
+    let com =  COMPLETED.may_load(deps.storage,&id)?;
 
-    let available: bool =! (_can!=None || _com!=None);
+    let available: bool =! (can.is_some() || com.is_some());
 
     let details = DetailsResponse{
         creator: swap.creator,
@@ -72,7 +97,7 @@ fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
         expires: swap.expires,    
         price: swap.price,
         swap_type: swap.swap_type,
-        open: available.clone(),
+        open: available,
     };
     Ok(details)
 }
@@ -98,11 +123,10 @@ pub fn execute_create(
     info: MessageInfo,
     msg: CreateMsg,
     ) -> Result<Response, ContractError> {
-        
         if msg.expires.is_expired(&env.block) {
             return Err(ContractError::Expired {});
         }
-    
+
        // let recipient = deps.api.addr_validate(&msg.recipient)?;
         let swap = CW721Swap {
             creator:info.sender,
@@ -113,15 +137,15 @@ pub fn execute_create(
             price:msg.price,
             swap_type:msg.swap_type, 
         };
-    
+
         // Try to store it, fail if the id already exists (unmodifiable swaps)
         SWAPS.update(deps.storage, &msg.id, |existing| match existing {
             None => Ok(swap),
             Some(_) => Err(ContractError::AlreadyExists {}),
         })?;
-    
+
         let res = Response::new();
-            
+
         Ok(res)
 }
 pub fn execute_finish(deps: DepsMut,
@@ -129,30 +153,30 @@ pub fn execute_finish(deps: DepsMut,
     info: MessageInfo,
     msg: CreateMsg)-> Result<Response, ContractError> {
         let swap = SWAPS.load(deps.storage, &msg.id)?;
-        let _can = CANCELLED.may_load(deps.storage, &msg.id)?;
-        let _com=  COMPLETED.may_load(deps.storage,&msg.id)?;
+        let can = CANCELLED.may_load(deps.storage, &msg.id)?;
+        let com =  COMPLETED.may_load(deps.storage,&msg.id)?;
+
         if msg.expires.is_expired(&env.block) {
             return Err(ContractError::Expired {});
         }
-        if _can!=None{
+        if can.is_some() {
             return Err(ContractError::Cancelled {});
         }
-        if _com!=None{
+        if com.is_some() {
             return Err(ContractError::Completed {});
         }
-        
+
         let transfer_results= match msg.swap_type{
             true => handle_swap_transfers(&swap.creator,&info.sender,swap.clone())?,
             false=> handle_swap_transfers(&info.sender,&swap.creator,swap.clone())?,
         };
-        
-        
+
         COMPLETED.update(deps.storage, &msg.id, |existing| match existing {
             None => Ok(true),
             Some(_) => Err(ContractError::AlreadyExists {}),
         })?;
+
         let res = Response::new().add_messages(transfer_results);
-            
         Ok(res)
     }
 
@@ -173,8 +197,6 @@ pub fn execute_cancel(deps: DepsMut,
     }
 
 fn handle_swap_transfers(nft_sender:&Addr,nft_receiver: &Addr,details:CW721Swap) -> StdResult<Vec<CosmosMsg>> {
-    
-  
     let token_transfer_msg = Cw20ExecuteMsg::TransferFrom {
         owner: nft_receiver.to_string(),
         recipient:nft_sender.to_string(),

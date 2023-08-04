@@ -3,7 +3,7 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use test::msg::{ ExecuteMsg, InstantiateMsg, QueryMsg};
+use archid_marketplace::msg::{ ExecuteMsg, InstantiateMsg, QueryMsg};
 
 
 fn main() {

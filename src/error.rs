@@ -22,6 +22,9 @@ pub enum ContractError {
     #[error("Send some coins to create an atomic swap")]
     EmptyBalance {},
 
+    #[error("InvalidInput")]
+    InvalidInput {},
+
     #[error("Atomic swap not yet expired")]
     NotExpired,
     #[error("Atomic swap not yet expired")]

@@ -1,8 +1,8 @@
 {
-  "name": "test",
+  "name": "archid-marketplace",
   "developer": {
     "archwayd": {
-      "docker": true
+      "docker": false
     },
     "scripts": {
       "test": "cargo unit-test",
@@ -12,40 +12,31 @@
       "query": "archwayd query wasm",
       "tx": "archwayd tx wasm execute"
     },
-    "deployments": [
-      {
-        "type": "create",
-        "chainId": "constantine-1",
-        "codeId": 95
-      }
-    ]
+    "deployments": []
   },
   "network": {
-    "name": "augusta",
-    "chainId": "augusta-1",
+    "name": "constantine",
+    "chainId": "constantine-3",
     "type": "testnet",
     "fees": {
-      "feeDenom": "uaugust"
+      "feeDenom": "aconst"
     },
     "gas": {
-      "prices": "0.002uaugust",
+      "prices": "0.002aconst",
       "mode": "auto",
-      "adjustment": "1.3"
+      "adjustment": "1.5"
     },
     "wasm": {
       "bech32Hrp": "archway",
-      "archwayd": "0.0.4",
+      "archwayd": "1.0.0-rc.2",
       "configDir": ".archway",
       "binary": "archwayd"
     },
     "urls": {
       "rpc": {
-        "url": "https://rpc.augusta-1.archway.tech",
+        "url": "https://rpc.constantine.archway.tech",
         "port": 443
-      },
-      "faucets": [
-        "https://faucet.augusta-1.archway.tech"
-      ]
+      }
     }
   }
 }

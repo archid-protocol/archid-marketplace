@@ -1,7 +1,7 @@
 use cosmwasm_std::{
-    to_binary, Addr, Binary, Deps, DepsMut, Env, QueryRequest, StdError, StdResult, WasmQuery,
+    to_binary, Addr, DepsMut, QueryRequest, StdError, WasmQuery,
 };
-use cw721_base::{Extension,  QueryMsg as Cw721QueryMsg};
+use cw721_base::{QueryMsg as Cw721QueryMsg};
 use cw721::OwnerOfResponse;
 
 pub fn query_name_owner(
