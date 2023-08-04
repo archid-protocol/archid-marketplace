@@ -55,7 +55,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::Create(msg) =>{execute_create(deps,_env,info,msg)},
         ExecuteMsg::Finish(msg) =>{execute_finish(deps,_env,info,msg)},
-        ExecuteMsg::Cancel(msg) =>{execute_cancel(deps,_env,info,msg)}
+        ExecuteMsg::Cancel(msg) =>{execute_cancel(deps,_env,info,msg)},
     }
 }
 
@@ -178,7 +178,7 @@ pub fn execute_finish(deps: DepsMut,
 )-> Result<Response, ContractError> {
     let swap = SWAPS.load(deps.storage, &msg.id)?;
     let can = CANCELLED.may_load(deps.storage, &msg.id)?;
-    let com =  COMPLETED.may_load(deps.storage,&msg.id)?;
+    let com = COMPLETED.may_load(deps.storage,&msg.id)?;
 
     if msg.expires.is_expired(&env.block) {
         return Err(ContractError::Expired {});
@@ -190,9 +190,9 @@ pub fn execute_finish(deps: DepsMut,
         return Err(ContractError::Completed {});
     }
 
-    let transfer_results= match msg.swap_type{
-        true => handle_swap_transfers(&swap.creator,&info.sender,swap.clone())?,
-        false=> handle_swap_transfers(&info.sender,&swap.creator,swap.clone())?,
+    let transfer_results = match msg.swap_type {
+        true => handle_swap_transfers(&swap.creator, &info.sender, swap.clone())?,
+        false => handle_swap_transfers(&info.sender, &swap.creator, swap.clone())?,
     };
 
     COMPLETED.update(deps.storage, &msg.id, |existing| match existing {
@@ -200,8 +200,12 @@ pub fn execute_finish(deps: DepsMut,
         Some(_) => Err(ContractError::AlreadyExists {}),
     })?;
 
-    let res = Response::new().add_messages(transfer_results);
-    Ok(res)
+    Ok(Response::new()
+        .add_attribute("action", "finish")
+        .add_attribute("token_id", msg.token_id)
+        .add_attribute("payment_token", msg.payment_token)
+        .add_attribute("price", msg.price)
+        .add_messages(transfer_results))
 }
 
 pub fn execute_cancel(deps: DepsMut,
@@ -209,16 +213,18 @@ pub fn execute_cancel(deps: DepsMut,
     info: MessageInfo,
     msg: CancelMsg
 )-> Result<Response, ContractError> {
-    let res = Response::new();
     let swap = SWAPS.load(deps.storage, &msg.id)?;
-    if info.sender!=swap.creator{
+    if info.sender != swap.creator{
         return Err(ContractError::Unauthorized {});
     }
     CANCELLED.update(deps.storage, &msg.id, |existing| match existing {
         None => Ok(true),
         Some(_) => Err(ContractError::AlreadyExists {}),
     })?;
-    Ok(res)
+
+    Ok(Response::new()
+        .add_attribute("action", "cancel")
+        .add_attribute("swap_id", msg.id))
 }
 
 fn handle_swap_transfers(nft_sender:&Addr,nft_receiver: &Addr,details:CW721Swap) -> StdResult<Vec<CosmosMsg>> {
