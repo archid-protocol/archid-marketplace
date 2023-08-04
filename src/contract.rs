@@ -1,6 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{
-    Addr, Binary, CosmosMsg, Deps, DepsMut, entry_point, Env, MessageInfo, 
+    Addr, BankMsg, Binary, CosmosMsg, Coin, Deps, DepsMut, entry_point, Env, MessageInfo, 
     Reply, Response, StdResult, SubMsgResult, to_binary, WasmMsg,
 };
 use cw_storage_plus::Bound;
@@ -191,6 +191,16 @@ pub fn execute_finish(deps: DepsMut,
         return Err(ContractError::Completed {});
     }
 
+    // If swapping for native `aarch`
+    // check payment conditions satisfied
+    if swap.payment_token.is_none() {
+        let required_payment = Coin {
+            denom: DENOM.to_string(),
+            amount: swap.price,
+        };
+        check_sent_required_payment(&info.funds, Some(required_payment))?;
+    }
+
     // XXX: @jjj This part is pretty confusing
     // swap type true equals offer, swap type false equals buy
     let transfer_results = match msg.swap_type {
@@ -258,29 +268,79 @@ fn handle_swap_transfers(
     nft_sender: &Addr, 
     nft_receiver: &Addr,
     details: CW721Swap
-) -> StdResult<Vec<CosmosMsg>> {
-    let token_transfer_msg = Cw20ExecuteMsg::TransferFrom {
-        owner: nft_receiver.to_string(),
-        recipient: nft_sender.to_string(),
-        amount: details.price
-    };
-    let cw20_callback:CosmosMsg = WasmMsg::Execute {
-        contract_addr: details.payment_token.unwrap().into(),
-        msg: to_binary(&token_transfer_msg)?,
-        funds: vec![],
-    }.into();
-    let nft_transfer_msg = Cw721ExecuteMsg::<Extension>::TransferNft{
-        recipient: nft_receiver.to_string(),
-        token_id: details.token_id.clone(),
-    };
-   
-    let cw721_callback:CosmosMsg = WasmMsg::Execute {
-        contract_addr: details.nft_contract.to_string(),
-        msg: to_binary(&nft_transfer_msg)?,
-        funds: vec![],
-    }.into();
-    
-    Ok(vec![cw721_callback,cw20_callback])
+) -> StdResult<Vec<CosmosMsg>> {//here
+    // cw20 swap
+    if details.payment_token.is_some() {
+        let token_transfer_msg = Cw20ExecuteMsg::TransferFrom {
+            owner: nft_receiver.to_string(),
+            recipient: nft_sender.to_string(),
+            amount: details.price
+        };
+        let cw20_callback: CosmosMsg = WasmMsg::Execute {
+            contract_addr: details.payment_token.unwrap().into(),
+            msg: to_binary(&token_transfer_msg)?,
+            funds: vec![],
+        }.into();
+        let nft_transfer_msg = Cw721ExecuteMsg::<Extension>::TransferNft {
+            recipient: nft_receiver.to_string(),
+            token_id: details.token_id.clone(),
+        };
+       
+        let cw721_callback:CosmosMsg = WasmMsg::Execute {
+            contract_addr: details.nft_contract.to_string(),
+            msg: to_binary(&nft_transfer_msg)?,
+            funds: vec![],
+        }.into();
+        
+        Ok(vec![cw721_callback, cw20_callback])
+    // aarch swap
+    } else {
+        let aarch_transfer_msg = BankMsg::Send {
+            to_address: nft_sender.to_string(),
+            amount: vec![Coin {
+                denom: DENOM.to_string(),
+                amount: details.price,
+            }],
+        };
+
+        let aarch_callback: CosmosMsg = cosmwasm_std::CosmosMsg::Bank(aarch_transfer_msg);
+
+        let nft_transfer_msg = Cw721ExecuteMsg::<Extension>::TransferNft {
+            recipient: nft_receiver.to_string(),
+            token_id: details.token_id.clone(),
+        };
+       
+        let cw721_callback:CosmosMsg = WasmMsg::Execute {
+            contract_addr: details.nft_contract.to_string(),
+            msg: to_binary(&nft_transfer_msg)?,
+            funds: vec![],
+        }.into();
+
+        Ok(vec![cw721_callback, aarch_callback])
+    }
+}
+
+pub fn check_sent_required_payment(
+    sent: &[Coin],
+    required: Option<Coin>,
+) -> Result<(), ContractError> {
+    if let Some(required_coin) = required {
+        let required_amount = required_coin.amount.u128();
+        if required_amount > 0 {
+            let sent_sufficient_funds = sent.iter().any(|coin| {
+                // check if a given sent coin matches denom
+                // and has sufficient amount
+                coin.denom == required_coin.denom && coin.amount.u128() >= required_amount
+            });
+
+            if sent_sufficient_funds {
+                return Ok(());
+            } else {
+                return Err(ContractError::Unauthorized {});
+            }
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]
