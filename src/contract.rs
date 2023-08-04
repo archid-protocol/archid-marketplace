@@ -338,10 +338,7 @@ mod tests {
                 QueryMsg::Details { id:"2ndswap".to_string() }
             ).unwrap()
         ).unwrap();
-        
-        println!("{}", qres.creator);
-        println!("{}", qres.contract);
-        println!("{}", qres.open);
+
         assert_eq!(qres.open, true);
     }
 }
