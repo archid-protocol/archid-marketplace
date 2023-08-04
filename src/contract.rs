@@ -199,6 +199,11 @@ pub fn execute_finish(deps: DepsMut,
             amount: swap.price,
         };
         check_sent_required_payment(&info.funds, Some(required_payment))?;
+
+        // Native aarch offers not allowed
+        if swap.swap_type {
+            return Err(ContractError::InvalidInput {});
+        }
     }
 
     // XXX: @jjj This part is pretty confusing

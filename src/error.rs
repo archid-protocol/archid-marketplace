@@ -22,7 +22,7 @@ pub enum ContractError {
     #[error("Send some coins to create an atomic swap")]
     EmptyBalance {},
 
-    #[error("InvalidInput")]
+    #[error("Invalid input")]
     InvalidInput {},
 
     #[error("Atomic swap not yet expired")]
