@@ -24,10 +24,10 @@ pub struct CancelMsg{
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CreateMsg {
-    pub id:String,
+    pub id: String,
     pub contract: Addr,
-    pub payment_token:Addr,
-    pub token_id:String,    
+    pub payment_token: Addr,
+    pub token_id: String,    
     pub expires: Expiration,    
     pub price: Uint128,
     pub swap_type: bool,
