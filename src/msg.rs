@@ -26,12 +26,21 @@ pub struct CancelMsg {
     pub id: String,
 }
 
+// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+// pub struct SwapMsgDefault {
+//     pub id: String,
+//     pub token_id: String,
+//     pub expires: Expiration,
+//     pub price: Uint128,
+//     pub swap_type: bool,
+// }
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct SwapMsg {
     pub id: String,
-    pub payment_token: Addr,
-    pub token_id: String,    
-    pub expires: Expiration,    
+    pub payment_token: Option<Addr>, // cw20 address
+    pub token_id: String,
+    pub expires: Expiration,
     pub price: Uint128,
     pub swap_type: bool,
 }
@@ -65,7 +74,7 @@ pub struct ListResponse {
 pub struct DetailsResponse {
     pub creator: Addr,
     pub contract: Addr,
-    pub payment_token: Addr,
+    pub payment_token: Option<Addr>,
     pub token_id: String,    
     pub expires: Expiration,    
     pub price: Uint128,

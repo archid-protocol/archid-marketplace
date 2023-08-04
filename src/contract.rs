@@ -22,6 +22,8 @@ use crate::state::{
 
 use cw2::{get_contract_version, set_contract_version};
 
+pub static DENOM: &str = "aarch";
+
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:archid-marketplace";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -54,9 +56,9 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Create(msg) =>{execute_create(deps, env, info, msg)},
-        ExecuteMsg::Finish(msg) =>{execute_finish(deps, env, info, msg)},
-        ExecuteMsg::Cancel(msg) =>{execute_cancel(deps, env, info, msg)},
+        ExecuteMsg::Create(msg) => { execute_create(deps, env, info, msg) },
+        ExecuteMsg::Finish(msg) => { execute_finish(deps, env, info, msg) },
+        ExecuteMsg::Cancel(msg) => { execute_cancel(deps, env, info, msg) },
         ExecuteMsg::UpdateConfig { config } => execute_update_config(deps, env, info, config),
     }
 }
@@ -101,7 +103,7 @@ fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
 
     let available: bool =! (can.is_some() || com.is_some());
 
-    let details = DetailsResponse{
+    let details = DetailsResponse {
         creator: swap.creator,
         contract: swap.nft_contract,
         payment_token: swap.payment_token,
@@ -129,6 +131,28 @@ fn query_list(
     })
 }
 
+// pub fn execute_create_default(//here
+//     deps: DepsMut,
+//     env: Env,
+//     info: MessageInfo,
+//     msg: SwapMsgDefault,
+// ) -> Result<Response, ContractError> {
+//     if msg.expires.is_expired(&env.block) {
+//         return Err(ContractError::Expired {});
+//     }
+
+//     let config = CONFIG.load(deps.storage)?;
+
+//     let swap = CW721SwapNative {
+//         creator: info.sender,
+//         nft_contract: config.cw721,
+//         token_id: msg.token_id,    
+//         expires: msg.expires,    
+//         price: msg.price,
+//         swap_type: msg.swap_type,
+//     };
+// }
+
 pub fn execute_create(
     deps: DepsMut,
     env: Env,
@@ -142,7 +166,7 @@ pub fn execute_create(
     let config = CONFIG.load(deps.storage)?;
 
     let swap = CW721Swap {
-        creator:info.sender,
+        creator: info.sender,
         nft_contract: config.cw721,
         payment_token: msg.payment_token,
         token_id: msg.token_id,    
@@ -157,10 +181,16 @@ pub fn execute_create(
         Some(_) => Err(ContractError::AlreadyExists {}),
     })?;
 
+    let payment_token: String = if swap.payment_token.is_some() { 
+        swap.payment_token.unwrap().to_string() 
+    } else { 
+        DENOM.to_string()
+    };
+
     Ok(Response::new()
         .add_attribute("action", "create")
         .add_attribute("token_id", swap.token_id)
-        .add_attribute("payment_token", swap.payment_token)
+        .add_attribute("payment_token", payment_token)
         .add_attribute("price", swap.price))
 }
 
@@ -184,6 +214,7 @@ pub fn execute_finish(deps: DepsMut,
     }
 
     // XXX: @jjj This part is pretty confusing
+    // swap type true equals offer, swap type false equals buy
     let transfer_results = match msg.swap_type {
         true => handle_swap_transfers(&swap.creator, &info.sender, swap.clone())?,
         false => handle_swap_transfers(&info.sender, &swap.creator, swap.clone())?,
@@ -194,10 +225,16 @@ pub fn execute_finish(deps: DepsMut,
         Some(_) => Err(ContractError::AlreadyExists {}),
     })?;
 
+    let payment_token: String = if msg.payment_token.is_some() { 
+        msg.payment_token.unwrap().to_string()
+    } else { 
+        DENOM.to_string()
+    };
+
     Ok(Response::new()
         .add_attribute("action", "finish")
         .add_attribute("token_id", msg.token_id)
-        .add_attribute("payment_token", msg.payment_token)
+        .add_attribute("payment_token", payment_token)
         .add_attribute("price", msg.price)
         .add_messages(transfer_results))
 }
@@ -246,11 +283,11 @@ fn handle_swap_transfers(
 ) -> StdResult<Vec<CosmosMsg>> {
     let token_transfer_msg = Cw20ExecuteMsg::TransferFrom {
         owner: nft_receiver.to_string(),
-        recipient:nft_sender.to_string(),
+        recipient: nft_sender.to_string(),
         amount: details.price
     };
     let cw20_callback:CosmosMsg = WasmMsg::Execute {
-        contract_addr: details.payment_token.into(),
+        contract_addr: details.payment_token.unwrap().into(),
         msg: to_binary(&token_transfer_msg)?,
         funds: vec![],
     }.into();
@@ -307,7 +344,7 @@ mod tests {
 
         let creation_msg = SwapMsg {
             id: "firstswap".to_string(),
-            payment_token: Addr::unchecked(MOCK_CONTRACT_ADDR),
+            payment_token: Some(Addr::unchecked(MOCK_CONTRACT_ADDR)),
             token_id: "2343".to_string(),    
             expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),    
             price: Uint128::from(100000_u32),
@@ -320,7 +357,7 @@ mod tests {
 
         let creation_msg2 = SwapMsg {
             id: "2ndswap".to_string(),
-            payment_token: Addr::unchecked(MOCK_CONTRACT_ADDR),
+            payment_token: Some(Addr::unchecked(MOCK_CONTRACT_ADDR)),
             token_id: "2343".to_string(),    
             expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),    
             price: Uint128::from(100000_u32),

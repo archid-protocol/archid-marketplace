@@ -159,7 +159,7 @@ fn test_buy_cw20() {
     // Create a SwapMsg for creating / finishing a swap
     let creation_msg = SwapMsg {
         id: "firstswap".to_string(),
-        payment_token: Addr::unchecked(cw20.clone()),
+        payment_token: Some(Addr::unchecked(cw20.clone())),
         token_id: token_id.clone(),    
         expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),  
         price: Uint128::from(100000_u32),
@@ -275,7 +275,7 @@ fn test_invalid_payment_cw20() {
     // Create a SwapMsg for creating / finishing a swap
     let creation_msg = SwapMsg {
         id: "firstswap".to_string(),
-        payment_token: Addr::unchecked(cw20.clone()),
+        payment_token: Some(Addr::unchecked(cw20.clone())),
         token_id: token_id.clone(),    
         expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),  
         price: Uint128::from(100000_u32),
@@ -380,7 +380,7 @@ fn test_overpayment_cw20() {
     // Create a SwapMsg for creating / finishing a swap
     let creation_msg = SwapMsg {
         id: "firstswap".to_string(),
-        payment_token: Addr::unchecked(cw20.clone()),
+        payment_token: Some(Addr::unchecked(cw20.clone())),
         token_id: token_id.clone(),    
         expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),  
         price: Uint128::from(100000_u32),

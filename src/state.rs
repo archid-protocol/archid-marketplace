@@ -21,12 +21,13 @@ pub struct Config {
 pub struct CW721Swap {    
     pub creator: Addr,
     pub nft_contract: Addr,
-    pub payment_token: Addr,
+    pub payment_token: Option<Addr>,
     pub token_id: String,
     pub expires: Expiration,
     pub price: Uint128,
     pub swap_type: bool,
 }
+
 pub fn all_swap_ids<'a>(
     storage: &dyn Storage,
     start: Option<Bound<'a, &'a str>>,
