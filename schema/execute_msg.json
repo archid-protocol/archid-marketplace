@@ -141,7 +141,6 @@
       "required": [
         "expires",
         "id",
-        "payment_token",
         "price",
         "swap_type",
         "token_id"
@@ -154,7 +153,14 @@
           "type": "string"
         },
         "payment_token": {
-          "$ref": "#/definitions/Addr"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Addr"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "price": {
           "$ref": "#/definitions/Uint128"

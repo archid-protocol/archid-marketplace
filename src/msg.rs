@@ -16,9 +16,7 @@ pub enum ExecuteMsg {
     Create(SwapMsg),
     Finish(SwapMsg),
     Cancel(CancelMsg),
-    UpdateConfig {
-        config: Config,
-    },
+    UpdateConfig { config: Config, },
 }
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -26,19 +24,10 @@ pub struct CancelMsg {
     pub id: String,
 }
 
-// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-// pub struct SwapMsgDefault {
-//     pub id: String,
-//     pub token_id: String,
-//     pub expires: Expiration,
-//     pub price: Uint128,
-//     pub swap_type: bool,
-// }
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct SwapMsg {
     pub id: String,
-    pub payment_token: Option<Addr>, // cw20 address
+    pub payment_token: Option<Addr>, // Optional cw20 address; if `None` create swap for `aarch`
     pub token_id: String,
     pub expires: Expiration,
     pub price: Uint128,

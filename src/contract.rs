@@ -131,28 +131,6 @@ fn query_list(
     })
 }
 
-// pub fn execute_create_default(//here
-//     deps: DepsMut,
-//     env: Env,
-//     info: MessageInfo,
-//     msg: SwapMsgDefault,
-// ) -> Result<Response, ContractError> {
-//     if msg.expires.is_expired(&env.block) {
-//         return Err(ContractError::Expired {});
-//     }
-
-//     let config = CONFIG.load(deps.storage)?;
-
-//     let swap = CW721SwapNative {
-//         creator: info.sender,
-//         nft_contract: config.cw721,
-//         token_id: msg.token_id,    
-//         expires: msg.expires,    
-//         price: msg.price,
-//         swap_type: msg.swap_type,
-//     };
-// }
-
 pub fn execute_create(
     deps: DepsMut,
     env: Env,
