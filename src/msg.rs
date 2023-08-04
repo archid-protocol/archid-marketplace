@@ -13,8 +13,8 @@ pub struct InstantiateMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    Create(CreateMsg),
-    Finish(CreateMsg),
+    Create(SwapMsg),
+    Finish(SwapMsg),
     Cancel(CancelMsg),
     UpdateConfig {
         config: Config,
@@ -27,7 +27,7 @@ pub struct CancelMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct CreateMsg {
+pub struct SwapMsg {
     pub id: String,
     pub payment_token: Addr,
     pub token_id: String,    
@@ -35,6 +35,7 @@ pub struct CreateMsg {
     pub price: Uint128,
     pub swap_type: bool,
 }
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
@@ -53,20 +54,21 @@ pub enum QueryMsg {
 #[serde(rename_all = "snake_case")]
 pub struct MigrateMsg {}
 
-// We define a custom struct for each query response
+// List swaps
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ListResponse {
     pub swaps: Vec<String>,
 }
-// We define a custom struct for each query response
+
+// Get details about a swap
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct DetailsResponse {
     pub creator: Addr,
     pub contract: Addr,
-    pub payment_token:Addr,
-    pub token_id:String,    
+    pub payment_token: Addr,
+    pub token_id: String,    
     pub expires: Expiration,    
     pub price: Uint128,
-    pub swap_type:bool,
-    pub open:bool,
+    pub swap_type: bool,
+    pub open: bool,
 }

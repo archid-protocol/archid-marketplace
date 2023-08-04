@@ -9,7 +9,7 @@
       ],
       "properties": {
         "create": {
-          "$ref": "#/definitions/CreateMsg"
+          "$ref": "#/definitions/SwapMsg"
         }
       },
       "additionalProperties": false
@@ -21,7 +21,7 @@
       ],
       "properties": {
         "finish": {
-          "$ref": "#/definitions/CreateMsg"
+          "$ref": "#/definitions/SwapMsg"
         }
       },
       "additionalProperties": false
@@ -34,6 +34,26 @@
       "properties": {
         "cancel": {
           "$ref": "#/definitions/CancelMsg"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "update_config"
+      ],
+      "properties": {
+        "update_config": {
+          "type": "object",
+          "required": [
+            "config"
+          ],
+          "properties": {
+            "config": {
+              "$ref": "#/definitions/Config"
+            }
+          }
         }
       },
       "additionalProperties": false
@@ -55,38 +75,18 @@
         }
       }
     },
-    "CreateMsg": {
+    "Config": {
       "type": "object",
       "required": [
-        "contract",
-        "expires",
-        "id",
-        "payment_token",
-        "price",
-        "swap_type",
-        "token_id"
+        "admin",
+        "cw721"
       ],
       "properties": {
-        "contract": {
+        "admin": {
           "$ref": "#/definitions/Addr"
         },
-        "expires": {
-          "$ref": "#/definitions/Expiration"
-        },
-        "id": {
-          "type": "string"
-        },
-        "payment_token": {
+        "cw721": {
           "$ref": "#/definitions/Addr"
-        },
-        "price": {
-          "$ref": "#/definitions/Uint128"
-        },
-        "swap_type": {
-          "type": "boolean"
-        },
-        "token_id": {
-          "type": "string"
         }
       }
     },
@@ -135,6 +135,37 @@
           "additionalProperties": false
         }
       ]
+    },
+    "SwapMsg": {
+      "type": "object",
+      "required": [
+        "expires",
+        "id",
+        "payment_token",
+        "price",
+        "swap_type",
+        "token_id"
+      ],
+      "properties": {
+        "expires": {
+          "$ref": "#/definitions/Expiration"
+        },
+        "id": {
+          "type": "string"
+        },
+        "payment_token": {
+          "$ref": "#/definitions/Addr"
+        },
+        "price": {
+          "$ref": "#/definitions/Uint128"
+        },
+        "swap_type": {
+          "type": "boolean"
+        },
+        "token_id": {
+          "type": "string"
+        }
+      }
     },
     "Timestamp": {
       "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n``` # use cosmwasm_std::Timestamp; let ts = Timestamp::from_nanos(1_000_000_202); assert_eq!(ts.nanos(), 1_000_000_202); assert_eq!(ts.seconds(), 1); assert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2); assert_eq!(ts.nanos(), 3_000_000_202); assert_eq!(ts.seconds(), 3); assert_eq!(ts.subsec_nanos(), 202); ```",

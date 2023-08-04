@@ -13,7 +13,7 @@ use cw721_base::{
 };
 
 use crate::msg::{
-    CancelMsg, CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg, 
+    CancelMsg, SwapMsg, DetailsResponse, ExecuteMsg, InstantiateMsg, 
     QueryMsg, ListResponse, MigrateMsg,
 };
 use crate::state::{ 
@@ -133,7 +133,7 @@ pub fn execute_create(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: CreateMsg,
+    msg: SwapMsg,
 ) -> Result<Response, ContractError> {
     if msg.expires.is_expired(&env.block) {
         return Err(ContractError::Expired {});
@@ -164,19 +164,10 @@ pub fn execute_create(
         .add_attribute("price", swap.price))
 }
 
-// pub fn execute_create_default(
-//     deps: DepsMut,
-//     env: Env,
-//     info: MessageInfo,
-//     msg: CreateDefaultMsg,
-// )-> Result<Response, ContractError> {
-
-// }
-
 pub fn execute_finish(deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: CreateMsg
+    msg: SwapMsg
 )-> Result<Response, ContractError> {
     let swap = SWAPS.load(deps.storage, &msg.id)?;
     let can = CANCELLED.may_load(deps.storage, &msg.id)?;
@@ -192,6 +183,7 @@ pub fn execute_finish(deps: DepsMut,
         return Err(ContractError::Completed {});
     }
 
+    // XXX: @jjj This part is pretty confusing
     let transfer_results = match msg.swap_type {
         true => handle_swap_transfers(&swap.creator, &info.sender, swap.clone())?,
         false => handle_swap_transfers(&info.sender, &swap.creator, swap.clone())?,
@@ -247,7 +239,11 @@ pub fn execute_update_config(
         .add_attribute("action", "update_config"))
 }
 
-fn handle_swap_transfers(nft_sender:&Addr,nft_receiver: &Addr,details:CW721Swap) -> StdResult<Vec<CosmosMsg>> {
+fn handle_swap_transfers(
+    nft_sender: &Addr, 
+    nft_receiver: &Addr,
+    details: CW721Swap
+) -> StdResult<Vec<CosmosMsg>> {
     let token_transfer_msg = Cw20ExecuteMsg::TransferFrom {
         owner: nft_receiver.to_string(),
         recipient:nft_sender.to_string(),
@@ -309,7 +305,7 @@ mod tests {
         let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
         assert_eq!(0, res.messages.len());
 
-        let creation_msg = CreateMsg {
+        let creation_msg = SwapMsg {
             id: "firstswap".to_string(),
             payment_token: Addr::unchecked(MOCK_CONTRACT_ADDR),
             token_id: "2343".to_string(),    
@@ -322,7 +318,7 @@ mod tests {
 
         execute(deps.as_mut(), mock_env(), info2, ExecuteMsg::Create(creation_msg)).unwrap();
 
-        let creation_msg2 = CreateMsg{ 
+        let creation_msg2 = SwapMsg {
             id: "2ndswap".to_string(),
             payment_token: Addr::unchecked(MOCK_CONTRACT_ADDR),
             token_id: "2343".to_string(),    
