@@ -268,7 +268,7 @@ fn handle_swap_transfers(
     nft_sender: &Addr, 
     nft_receiver: &Addr,
     details: CW721Swap
-) -> StdResult<Vec<CosmosMsg>> {//here
+) -> StdResult<Vec<CosmosMsg>> {
     // cw20 swap
     if details.payment_token.is_some() {
         let token_transfer_msg = Cw20ExecuteMsg::TransferFrom {
