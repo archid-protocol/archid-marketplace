@@ -171,7 +171,7 @@ pub fn execute_finish(deps: DepsMut,
 )-> Result<Response, ContractError> {
     let swap = SWAPS.load(deps.storage, &msg.id)?;
     let can = CANCELLED.may_load(deps.storage, &msg.id)?;
-    let com = COMPLETED.may_load(deps.storage,&msg.id)?;
+    let com = COMPLETED.may_load(deps.storage, &msg.id)?;
 
     if msg.expires.is_expired(&env.block) {
         return Err(ContractError::Expired {});
