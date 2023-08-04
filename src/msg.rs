@@ -1,12 +1,12 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
 use cosmwasm_std::{Addr, Uint128};
-
 use cw20::Expiration;
+use crate::state::{Config};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
+    pub admin: Addr,
     pub cw721: Addr,
 }
 
@@ -16,7 +16,9 @@ pub enum ExecuteMsg {
     Create(CreateMsg),
     Finish(CreateMsg),
     Cancel(CancelMsg),
-
+    UpdateConfig {
+        config: Config,
+    },
 }
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

@@ -53,6 +53,7 @@ fn create_swap(router: &mut App, owner: &Addr, cw721: Addr) -> Addr {
     
     let swap_id = router.store_code(contract_swap721());
     let msg = InstantiateMsg {
+        admin: owner.clone(),
         cw721: cw721,  
     };
     let swap_addr = router

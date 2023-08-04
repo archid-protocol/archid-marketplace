@@ -36,6 +36,7 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let config = Config {
+        admin: msg.admin,
         cw721: msg.cw721.clone(),
     };
     CONFIG.save(deps.storage, &config)?;
@@ -48,14 +49,15 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Create(msg) =>{execute_create(deps,_env,info,msg)},
-        ExecuteMsg::Finish(msg) =>{execute_finish(deps,_env,info,msg)},
-        ExecuteMsg::Cancel(msg) =>{execute_cancel(deps,_env,info,msg)},
+        ExecuteMsg::Create(msg) =>{execute_create(deps, env, info, msg)},
+        ExecuteMsg::Finish(msg) =>{execute_finish(deps, env, info, msg)},
+        ExecuteMsg::Cancel(msg) =>{execute_cancel(deps, env, info, msg)},
+        ExecuteMsg::UpdateConfig { config } => execute_update_config(deps, env, info, config),
     }
 }
 
@@ -227,6 +229,24 @@ pub fn execute_cancel(deps: DepsMut,
         .add_attribute("swap_id", msg.id))
 }
 
+pub fn execute_update_config(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    config_update: Config,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+
+    if config.admin != info.sender {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    CONFIG.save(deps.storage, &config_update)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "update_config"))
+}
+
 fn handle_swap_transfers(nft_sender:&Addr,nft_receiver: &Addr,details:CW721Swap) -> StdResult<Vec<CosmosMsg>> {
     let token_transfer_msg = Cw20ExecuteMsg::TransferFrom {
         owner: nft_receiver.to_string(),
@@ -269,6 +289,7 @@ mod tests {
 
         // Instantiate an empty contract
         let instantiate_msg = InstantiateMsg {
+            admin: Addr::unchecked(MOCK_CONTRACT_ADDR),
             cw721: Addr::unchecked(MOCK_CONTRACT_ADDR),
         };
         let info = mock_info("anyone", &[]);
@@ -281,6 +302,7 @@ mod tests {
 
         // Instantiate an empty contract
         let instantiate_msg = InstantiateMsg {
+            admin: Addr::unchecked(MOCK_CONTRACT_ADDR),
             cw721: Addr::unchecked(MOCK_CONTRACT_ADDR),
         };
         let info = mock_info("anyone", &[]);
