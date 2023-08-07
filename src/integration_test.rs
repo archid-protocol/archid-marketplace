@@ -698,7 +698,8 @@ fn test_invalid_payment_native() {
     assert_eq!(owner_query.owner, cw721_owner);
 }
 
-// cw721 buyer overpays
+// cw721 buyer (arch_owner) overpays
+// seller (cw721_owner) receives the full overpaid amount
 #[test]
 fn test_overpayment_native() {
     let mut app = mock_app();
