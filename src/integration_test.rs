@@ -186,7 +186,7 @@ fn test_buy_cw20() {
         id: "firstswap".to_string(),
         payment_token: Some(Addr::unchecked(cw20.clone())),
         token_id: token_id.clone(),    
-        expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),  
+        expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),
         price: Uint128::from(100000_u32),
         swap_type: true,
     };
@@ -302,7 +302,7 @@ fn test_invalid_payment_cw20() {
         id: "firstswap".to_string(),
         payment_token: Some(Addr::unchecked(cw20.clone())),
         token_id: token_id.clone(),    
-        expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),  
+        expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),
         price: Uint128::from(100000_u32),
         swap_type: true,
     };
@@ -407,7 +407,7 @@ fn test_overpayment_cw20() {
         id: "firstswap".to_string(),
         payment_token: Some(Addr::unchecked(cw20.clone())),
         token_id: token_id.clone(),    
-        expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),  
+        expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),
         price: Uint128::from(100000_u32),
         swap_type: true,
     };
@@ -529,7 +529,7 @@ fn test_buy_native() {
         id: "firstswap".to_string(),
         payment_token: None,
         token_id: token_id.clone(),    
-        expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),  
+        expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),
         price: Uint128::from(1000000000000000000_u128), // 1 ARCH as aarch
         swap_type: true,
     };
@@ -634,7 +634,7 @@ fn test_invalid_payment_native() {
         id: "firstswap".to_string(),
         payment_token: None,
         token_id: token_id.clone(),    
-        expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),  
+        expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),
         price: Uint128::from(5000000000000000000_u128), // 5 ARCH as aarch
         swap_type: true,
     };
@@ -743,7 +743,7 @@ fn test_overpayment_native() {
         id: "firstswap".to_string(),
         payment_token: None,
         token_id: token_id.clone(),    
-        expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),  
+        expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),
         price: Uint128::from(1000000000000000000_u128), // 1 ARCH as aarch
         swap_type: true,
     };
