@@ -181,7 +181,7 @@ pub fn execute_finish(deps: DepsMut,
     let can = CANCELLED.may_load(deps.storage, &msg.id)?;
     let com = COMPLETED.may_load(deps.storage, &msg.id)?;
 
-    if msg.expires.is_expired(&env.block) {
+    if swap.expires.is_expired(&env.block) {
         return Err(ContractError::Expired {});
     }
     if can.is_some() {
