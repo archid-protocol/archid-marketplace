@@ -201,13 +201,13 @@ pub fn execute_finish(deps: DepsMut,
         check_sent_required_payment(&info.funds, Some(required_payment))?;
 
         // Native aarch offers not allowed
-        if swap.swap_type {
+        if !swap.swap_type {
             return Err(ContractError::InvalidInput {});
         }
     }
 
     // XXX: @jjj This part is pretty confusing
-    // swap type true equals offer, swap type false equals buy
+    // swap type false equals offer, swap type true equals buy
     let transfer_results = match msg.swap_type {
         true => handle_swap_transfers(&swap.creator, &info.sender, swap.clone())?,
         false => handle_swap_transfers(&info.sender, &swap.creator, swap.clone())?,

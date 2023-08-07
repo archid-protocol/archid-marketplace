@@ -16,7 +16,7 @@ pub struct Config {
     pub cw721: Addr,
 }
 
-// swap type of true equals offer, swap type of false equals buy
+// swap type of false equals offer, swap type of true equals buy
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema)]
 pub struct CW721Swap {    
     pub creator: Addr,
