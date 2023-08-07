@@ -209,8 +209,8 @@ pub fn execute_finish(deps: DepsMut,
     // XXX: @jjj This part is pretty confusing
     // swap type false equals offer, swap type true equals buy
     let transfer_results = match msg.swap_type {
-        true => handle_swap_transfers(&swap.creator, &info.sender, swap.clone())?,
-        false => handle_swap_transfers(&info.sender, &swap.creator, swap.clone())?,
+        true => handle_swap_transfers(&swap.creator, &info.sender, swap.clone(), &info.funds)?,
+        false => handle_swap_transfers(&info.sender, &swap.creator, swap.clone(), &info.funds)?,
     };
 
     COMPLETED.update(deps.storage, &msg.id, |existing| match existing {
@@ -272,7 +272,8 @@ pub fn execute_update_config(
 fn handle_swap_transfers(
     nft_sender: &Addr, 
     nft_receiver: &Addr,
-    details: CW721Swap
+    details: CW721Swap,
+    funds: &[Coin],
 ) -> StdResult<Vec<CosmosMsg>> {
     // cw20 swap
     let payment_callback: CosmosMsg = if details.payment_token.is_some() {
@@ -292,10 +293,7 @@ fn handle_swap_transfers(
     } else {
         let aarch_transfer_msg = BankMsg::Send {
             to_address: nft_sender.to_string(),
-            amount: vec![Coin {
-                denom: DENOM.to_string(),
-                amount: details.price,
-            }],
+            amount: funds.to_vec(),
         };
 
         let aarch_callback: CosmosMsg = cosmwasm_std::CosmosMsg::Bank(aarch_transfer_msg);

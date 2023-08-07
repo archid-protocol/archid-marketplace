@@ -574,7 +574,8 @@ fn test_buy_native() {
 
     // arch_owner has received the NFT
     let owner_query: OwnerOfResponse = query(
-        &mut app,nft.clone(),
+        &mut app,
+        nft.clone(),
         Cw721QueryMsg::OwnerOf {
             token_id: token_id, 
             include_expired: None
@@ -583,9 +584,221 @@ fn test_buy_native() {
 
     // cw721_owner has received the ARCH amount
     let balance_query: Coin = bank_query(&mut app, &cw721_owner);
-    dbg!(balance_query.amount);
    
     assert_eq!(swap_query.open, false);
     assert_eq!(owner_query.owner, arch_owner);
     assert_eq!(balance_query.amount, Uint128::from(1000000000000000000_u128));
+}
+
+// cw721 buyer must send correct ARCH amount
+#[test]
+fn test_invalid_payment_native() {
+    let mut app = mock_app();
+    
+    // Swap owner deploys
+    let swap_admin = Addr::unchecked("swap_deployer");
+    // cw721_owner owns the cw721
+    let cw721_owner = Addr::unchecked("original_owner");
+    // arch_owner owns ARCH
+    let arch_owner = Addr::unchecked("arch_owner");
+
+    // cw721_owner creates the cw721
+    let nft = create_cw721(&mut app, &cw721_owner);
+    
+    // swap_admin creates the swap contract 
+    let swap = create_swap(&mut app, &swap_admin, nft.clone());
+    let swap_inst = swap.clone();
+    
+    // Mint native to `arch_owner`
+    mint_native(
+        &mut app,
+        arch_owner.to_string(),
+        Uint128::from(10000000000000000000_u128), // 10 ARCH as aarch
+    );
+
+    // cw721_owner mints a cw721 
+    let token_id = "petrify".to_string();
+    let token_uri = "https://www.merriam-webster.com/dictionary/petrify".to_string();
+    let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Extension> {
+        token_id: token_id.clone(),
+        owner: cw721_owner.to_string(),
+        token_uri: Some(token_uri.clone()),
+        extension: None,
+    });
+    let _res = app
+        .execute_contract(cw721_owner.clone(), nft.clone(), &mint_msg, &[])
+        .unwrap();
+
+    // Create a SwapMsg for creating / finishing a swap
+    let creation_msg = SwapMsg {
+        id: "firstswap".to_string(),
+        payment_token: None,
+        token_id: token_id.clone(),    
+        expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),  
+        price: Uint128::from(5000000000000000000_u128), // 5 ARCH as aarch
+        swap_type: true,
+    };
+    let finish_msg = creation_msg.clone();
+
+    // Seller (cw721_owner) must approve the swap contract to spend their NFT
+    let nft_approve_msg = Cw721ExecuteMsg::Approve::<Extension> {
+        spender: swap.to_string(),
+        token_id: token_id.clone(),
+        expires: None,
+    };
+    app
+        .execute_contract(cw721_owner.clone(), nft.clone(), &nft_approve_msg, &[])
+        .unwrap();
+
+    // cw721 seller (cw721_owner) creates a swap
+    app
+        .execute_contract(cw721_owner.clone(), swap_inst.clone(), &ExecuteMsg::Create(creation_msg), &[])
+        .unwrap();
+
+    // Buyer attempts to purchase cw721, under paying 1 ARCH
+    assert!(app.execute_contract(
+        arch_owner.clone(), 
+        swap_inst.clone(), 
+        &ExecuteMsg::Finish(finish_msg), 
+        &[Coin {
+            denom: String::from(DENOM),
+            amount: Uint128::from(1000000000000000000_u128)
+        }]
+    )
+    .is_err());
+
+    // Swap is still open (open == true)
+    let swap_query: DetailsResponse = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::Details{
+            id: "firstswap".to_string()
+        }
+    ).unwrap();
+
+    // cw721_owner has retained the NFT
+    let owner_query: OwnerOfResponse = query(
+        &mut app,
+        nft.clone(),
+        Cw721QueryMsg::OwnerOf {
+            token_id: token_id, 
+            include_expired: None
+        }
+    ).unwrap();
+
+    // cw721_owner has not received the ARCH amount
+    let cw721_owner_balance: Coin = bank_query(&mut app, &cw721_owner);
+    dbg!(cw721_owner_balance.amount);
+
+    // arch_owner has retained their original balance (minus gas fees)
+    let arch_owner_balance: Coin = bank_query(&mut app, &cw721_owner);
+    dbg!(arch_owner_balance.amount);
+   
+    assert_eq!(swap_query.open, true);
+    assert_eq!(owner_query.owner, cw721_owner);
+}
+
+// cw721 buyer overpays
+#[test]
+fn test_overpayment_native() {
+    let mut app = mock_app();
+    
+    // Swap owner deploys
+    let swap_admin = Addr::unchecked("swap_deployer");
+    // cw721_owner owns the cw721
+    let cw721_owner = Addr::unchecked("original_owner");
+    // arch_owner owns ARCH
+    let arch_owner = Addr::unchecked("arch_owner");
+
+    // cw721_owner creates the cw721
+    let nft = create_cw721(&mut app, &cw721_owner);
+    
+    // swap_admin creates the swap contract 
+    let swap = create_swap(&mut app, &swap_admin, nft.clone());
+    let swap_inst = swap.clone();
+    
+    // Mint native to `arch_owner`
+    mint_native(
+        &mut app,
+        arch_owner.to_string(),
+        Uint128::from(10000000000000000000_u128), // 10 ARCH as aarch
+    );
+
+    // cw721_owner mints a cw721 
+    let token_id = "petrify".to_string();
+    let token_uri = "https://www.merriam-webster.com/dictionary/petrify".to_string();
+    let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Extension> {
+        token_id: token_id.clone(),
+        owner: cw721_owner.to_string(),
+        token_uri: Some(token_uri.clone()),
+        extension: None,
+    });
+    let _res = app
+        .execute_contract(cw721_owner.clone(), nft.clone(), &mint_msg, &[])
+        .unwrap();
+
+    // Create a SwapMsg for creating / finishing a swap
+    let creation_msg = SwapMsg {
+        id: "firstswap".to_string(),
+        payment_token: None,
+        token_id: token_id.clone(),    
+        expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),  
+        price: Uint128::from(1000000000000000000_u128), // 1 ARCH as aarch
+        swap_type: true,
+    };
+    let finish_msg = creation_msg.clone();
+
+    // Seller (cw721_owner) must approve the swap contract to spend their NFT
+    let nft_approve_msg = Cw721ExecuteMsg::Approve::<Extension> {
+        spender: swap.to_string(),
+        token_id: token_id.clone(),
+        expires: None,
+    };
+    app
+        .execute_contract(cw721_owner.clone(), nft.clone(), &nft_approve_msg, &[])
+        .unwrap();
+
+    // cw721 seller (cw721_owner) creates a swap
+    app
+        .execute_contract(cw721_owner.clone(), swap_inst.clone(), &ExecuteMsg::Create(creation_msg), &[])
+        .unwrap();
+
+    // Buyer purchases cw721, paying 10 ARCH and consuming the swap
+    app
+        .execute_contract(
+            arch_owner.clone(), 
+            swap_inst.clone(), 
+            &ExecuteMsg::Finish(finish_msg), 
+            &[Coin {
+                denom: String::from(DENOM),
+                amount: Uint128::from(10000000000000000000_u128)
+            }]
+        )
+        .unwrap();
+
+    // Swap is now closed (open == false)
+    let swap_query: DetailsResponse = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::Details{
+            id: "firstswap".to_string()
+        }
+    ).unwrap();
+
+    // arch_owner has received the NFT
+    let owner_query: OwnerOfResponse = query(
+        &mut app,
+        nft.clone(),
+        Cw721QueryMsg::OwnerOf {
+            token_id: token_id, 
+            include_expired: None
+        }
+    ).unwrap();
+
+    // cw721_owner has received the ARCH amount
+    let balance_query: Coin = bank_query(&mut app, &cw721_owner);
+   
+    assert_eq!(swap_query.open, false);
+    assert_eq!(owner_query.owner, arch_owner);
+    assert_eq!(balance_query.amount, Uint128::from(10000000000000000000_u128));
 }
