@@ -208,7 +208,7 @@ fn test_buy_cw20() {
         .unwrap();
 
     // cw721 buyer (cw20_owner) must approve swap contract to spend their cw20
-    let cw20_approve_msg = Cw20ExecuteMsg::IncreaseAllowance  {
+    let cw20_approve_msg = Cw20ExecuteMsg::IncreaseAllowance {
         spender: swap.to_string(),
         amount:  Uint128::from(100000_u32),
         expires: None,
@@ -324,7 +324,7 @@ fn test_invalid_payment_cw20() {
         .unwrap();
 
     // cw20_owner does not approve enough funds
-    let cw20_approve_msg = Cw20ExecuteMsg::IncreaseAllowance  {
+    let cw20_approve_msg = Cw20ExecuteMsg::IncreaseAllowance {
         spender: swap.to_string(),
         amount:  Uint128::from(10000_u32),
         expires: None,
@@ -429,7 +429,7 @@ fn test_overpayment_cw20() {
         .unwrap();
 
     // cw721 buyer (cw20_owner) allows swap contract to spend too many cw20s
-    let cw20_approve_msg = Cw20ExecuteMsg::IncreaseAllowance  {
+    let cw20_approve_msg = Cw20ExecuteMsg::IncreaseAllowance {
         spender: swap.to_string(),
         amount:  Uint128::from(900000_u32),
         expires: None,
