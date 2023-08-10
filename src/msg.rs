@@ -46,6 +46,12 @@ pub enum QueryMsg {
     /// Returns the details of the named swap, error if not created.
     /// Return type: DetailsResponse.
     Details { id: String },
+    GetOffers {
+        token_id: String,        
+    },
+    GetListings {
+        token_id: String,        
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]

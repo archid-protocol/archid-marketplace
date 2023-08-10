@@ -1,6 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{
-    entry_point, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env,
+    entry_point, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut,Order, Env,
     MessageInfo, Reply, Response, StdResult, SubMsgResult, WasmMsg,
 };
 use cw_storage_plus::Bound;
@@ -64,6 +64,12 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::List { start_after, limit } => to_binary(&query_list(deps, start_after, limit)?),
         QueryMsg::Details { id } => to_binary(&query_details(deps, id)?),
+        QueryMsg::GetOffers { token_id } => {
+            to_binary(&query_swaps(deps, token_id, SwapType::Offer)?)
+        }
+        QueryMsg::GetListings { token_id } => {
+            to_binary(&query_swaps(deps, token_id, SwapType::Sale)?)
+        }
     }
 }
 
@@ -121,7 +127,23 @@ fn query_list(
         swaps: all_swap_ids(deps.storage, start, limit)?,
     })
 }
+fn query_swaps(deps: Deps, id: String, side: SwapType) -> StdResult<Vec<CW721Swap>> {
+    let config = CONFIG.load(deps.storage)?;
+    let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
+        .range(deps.storage, None, None, Order::Ascending)
+        .collect();
 
+    let results = swaps
+        .unwrap()
+        .into_iter()
+        .map(|t| t.1)
+        .filter(|item| {
+            item.nft_contract == config.cw721 && item.token_id == id && item.swap_type == side
+        })
+        .collect();
+
+    Ok(results)
+}
 pub fn execute_create(
     deps: DepsMut,
     env: Env,
