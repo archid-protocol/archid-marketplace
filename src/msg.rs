@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use cosmwasm_std::{Addr, Uint128};
 use cw20::Expiration;
-use crate::state::{Config};
+use crate::state::{Config,SwapType};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
@@ -31,7 +31,7 @@ pub struct SwapMsg {
     pub token_id: String,
     pub expires: Expiration,
     pub price: Uint128,
-    pub swap_type: bool,
+    pub swap_type: SwapType,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -67,6 +67,6 @@ pub struct DetailsResponse {
     pub token_id: String,    
     pub expires: Expiration,    
     pub price: Uint128,
-    pub swap_type: bool,
-    pub open: bool,
+    pub swap_type: SwapType
+    
 }
