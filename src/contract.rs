@@ -196,7 +196,7 @@ pub fn execute_update(
     info: MessageInfo,
     msg: SwapMsg,
 ) -> Result<Response, ContractError> {
-    let res = Response::new().add_attribute("update", &msg.id);
+    
     let swap = SWAPS.load(deps.storage, &msg.id)?;
     if info.sender != swap.creator {
         return Err(ContractError::Unauthorized {});
@@ -212,7 +212,11 @@ pub fn execute_update(
     };
     SWAPS.remove(deps.storage, &msg.id);
     SWAPS.save(deps.storage, &msg.id, &swap)?;
-    Ok(res)
+    Ok(Response::new()
+    .add_attribute("action", "update")
+    .add_attribute("swap_id", &msg.id)
+    .add_attribute("token_id", &swap.token_id))
+
 }
 pub fn execute_finish(
     deps: DepsMut,
