@@ -54,6 +54,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::Create(msg) => execute_create(deps, env, info, msg),
         ExecuteMsg::Finish(msg) => execute_finish(deps, env, info, msg),
+        ExecuteMsg::Update(msg) => execute_update(deps, env, info, msg),
         ExecuteMsg::Cancel(msg) => execute_cancel(deps, env, info, msg),
         ExecuteMsg::UpdateConfig { config } => execute_update_config(deps, env, info, config),
     }
@@ -189,7 +190,30 @@ pub fn execute_create(
         .add_attribute("payment_token", payment_token)
         .add_attribute("price", swap.price))
 }
-
+pub fn execute_update(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    msg: SwapMsg,
+) -> Result<Response, ContractError> {
+    let res = Response::new().add_attribute("update", &msg.id);
+    let swap = SWAPS.load(deps.storage, &msg.id)?;
+    if info.sender != swap.creator {
+        return Err(ContractError::Unauthorized {});
+    }
+    let swap = CW721Swap {
+        creator: info.sender,
+        nft_contract: swap.nft_contract,
+        payment_token: msg.payment_token,
+        token_id: msg.token_id,
+        expires: msg.expires,
+        price: msg.price,
+        swap_type: msg.swap_type,
+    };
+    SWAPS.remove(deps.storage, &msg.id);
+    SWAPS.save(deps.storage, &msg.id, &swap)?;
+    Ok(res)
+}
 pub fn execute_finish(
     deps: DepsMut,
     env: Env,

@@ -25,8 +25,7 @@ pub enum ContractError {
     #[error("Invalid input")]
     InvalidInput {},
 
-    #[error("Atomic swap not yet expired")]
-    NotExpired,
+ 
     #[error("Unauthorized")]
     Unauthorized,
     #[error("Expired atomic swap")]
