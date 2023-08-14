@@ -15,9 +15,7 @@ use cw721_base::{
 };
 use cw721::OwnerOfResponse;
 
-use crate::msg::{
-    ExecuteMsg, DetailsResponse, QueryMsg, SwapMsg, InstantiateMsg,
-};
+use crate::msg::{ExecuteMsg, SwapMsg, InstantiateMsg};
 use crate::state::SwapType;
 use crate::contract::DENOM;
 
