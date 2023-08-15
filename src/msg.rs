@@ -37,21 +37,23 @@ pub struct SwapMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    /// Show all open swaps. Return type is ListResponse.
+    /// Get all swaps (enumerable)
+    /// Return type: ListResponse
     List {
         start_after: Option<String>,
         limit: Option<u32>,
     },
+    /// Get all swaps of type `SwapType::Offer`
+    GetOffers { token_id: String },
+    /// Get all swaps of type `SwapType::Sale`
+    GetListings { token_id: String },
+    /// Show all swaps created by a specific address
+    /// Results include both `SwapType::Offer` and `SwapType::Sale`
+    SwapsOf { address: Addr },
     
     /// Returns the details of the named swap, error if not created.
     /// Return type: DetailsResponse.
     Details { id: String },
-    GetOffers {
-        token_id: String,        
-    },
-    GetListings {
-        token_id: String,        
-    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]

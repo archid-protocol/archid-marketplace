@@ -74,6 +74,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetListings { token_id } => {
             to_binary(&query_swaps(deps, token_id, SwapType::Sale)?)
         }
+        QueryMsg::SwapsOf { address } => {
+            to_binary(&query_swaps_by_creator(deps, address)?)
+        }
     }
 }
 
@@ -102,9 +105,6 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 
 fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
     let swap = SWAPS.load(deps.storage, &id)?;
-
-    // Convert balance to human balance
-
     let details = DetailsResponse {
         creator: swap.creator,
         contract: swap.nft_contract,
@@ -143,6 +143,23 @@ fn query_swaps(deps: Deps, id: String, side: SwapType) -> StdResult<Vec<CW721Swa
         .map(|t| t.1)
         .filter(|item| {
             item.nft_contract == config.cw721 && item.token_id == id && item.swap_type == side
+        })
+        .collect();
+
+    Ok(results)
+}
+fn query_swaps_by_creator(deps: Deps, address: Addr) -> StdResult<Vec<CW721Swap>> {
+    let config = CONFIG.load(deps.storage)?;
+    let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
+        .range(deps.storage, None, None, Order::Ascending)
+        .collect();
+
+    let results = swaps
+        .unwrap()
+        .into_iter()
+        .map(|t| t.1)
+        .filter(|item| {
+            item.nft_contract == config.cw721 && item.creator == address
         })
         .collect();
 
