@@ -15,6 +15,14 @@
     "deployments": [
       {
         "project": "archid-marketplace",
+        "type": "store",
+        "chainId": "constantine-3",
+        "codeId": 1120,
+        "checksum": "d3354917ffe1ef417b73829d604679ed9d31b1282eb96e6f0c8b49216a18a6e1",
+        "txhash": "841273DDAD66310849B53BD15DDD9A92C6F48ADAC4610DF26F7CEB33B1DFEF48"
+      },
+      {
+        "project": "archid-marketplace",
         "type": "set-metadata",
         "chainId": "constantine-3",
         "codeId": 1108,
