@@ -96,7 +96,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
     if original_version.contract != name {
         return Err(ContractError::InvalidInput {});
     }
-    if original_version.version <= version {
+    if original_version.version >= version {
         return Err(ContractError::InvalidInput {});
     }
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
