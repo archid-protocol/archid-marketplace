@@ -1,5 +1,8 @@
 #![cfg(test)]
+use std::hash::Hash;
+use std::collections::HashSet;
 use serde::{de::DeserializeOwned, Serialize};
+
 use cosmwasm_std::{
     Addr, BalanceResponse as BalanceResponseBank, BankQuery, Coin, Querier, QueryRequest, Empty, 
     from_binary, to_binary, Uint128, StdError, WasmQuery,
@@ -15,7 +18,9 @@ use cw721_base::{
 };
 use cw721::OwnerOfResponse;
 
-use crate::msg::{ExecuteMsg, SwapMsg, InstantiateMsg};
+use crate::msg::{
+    ExecuteMsg, ListResponse, QueryMsg, SwapMsg, InstantiateMsg
+};
 use crate::state::SwapType;
 use crate::contract::DENOM;
 
@@ -137,6 +142,15 @@ fn bank_query(app: &App, address: &Addr) -> Coin {
     return balance.amount;
 }
 
+fn has_unique_elements<T>(iter: T) -> bool
+where
+    T: IntoIterator,
+    T::Item: Eq + Hash,
+{
+    let mut uniq = HashSet::new();
+    iter.into_iter().all(move |x| uniq.insert(x))
+}
+
 // Receive cw20 tokens and release upon approval
 #[test]
 fn test_buy_cw20() {
@@ -186,7 +200,7 @@ fn test_buy_cw20() {
         token_id: token_id.clone(),    
         expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),
         price: Uint128::from(100000_u32),
-        swap_type:SwapType::Sale,
+        swap_type: SwapType::Sale,
     };
     let finish_msg = creation_msg.clone();
 
@@ -238,8 +252,7 @@ fn test_buy_cw20() {
             address: cw721_owner.to_string()
         }
     ).unwrap();
-   
-    //assert_eq!(swap_query.open, false);
+
     assert_eq!(owner_query.owner, cw20_owner);
     assert_eq!(balance_query.balance, Uint128::from(100000_u32));
 }
@@ -336,10 +349,6 @@ fn test_invalid_payment_cw20() {
             .execute_contract(random.clone(), swap_inst.clone(), &ExecuteMsg::Finish(finish_msg), &[])
             .is_err()
     );
-
-
-   
-   // assert_eq!(swap_query.open, true);
 }
 
 // cw721 buyer increases payment allowance too high
@@ -426,7 +435,6 @@ fn test_overpayment_cw20() {
         .execute_contract(cw721_owner.clone(), swap_inst.clone(), &ExecuteMsg::Finish(finish_msg), &[])
         .unwrap();
 
-
     // cw20_owner has received the NFT
     let owner_query: OwnerOfResponse = query(
         &mut app,nft.clone(),
@@ -453,8 +461,7 @@ fn test_overpayment_cw20() {
             address: cw20_owner.to_string()
         }
     ).unwrap();
-   
-    
+
     assert_eq!(owner_query.owner, cw20_owner);
     assert_eq!(buyer_balance_query.balance, Uint128::from(100000_u32));
     assert_eq!(seller_balance_query.balance, Uint128::from(900000_u32));
@@ -506,7 +513,7 @@ fn test_buy_native() {
         token_id: token_id.clone(),    
         expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),
         price: Uint128::from(1000000000000000000_u128), // 1 ARCH as aarch
-        swap_type:SwapType::Sale,
+        swap_type: SwapType::Sale,
     };
     let finish_msg = creation_msg.clone();
 
@@ -551,8 +558,7 @@ fn test_buy_native() {
 
     // cw721_owner has received the ARCH amount
     let balance_query: Coin = bank_query(&mut app, &cw721_owner);
-   
-    
+
     assert_eq!(owner_query.owner, arch_owner);
     assert_eq!(balance_query.amount, Uint128::from(1000000000000000000_u128));
 }
@@ -634,8 +640,6 @@ fn test_invalid_payment_native() {
     )
     .is_err());
 
-    // Swap is still open (open == true)
-  
     // cw721_owner has retained the NFT
     let owner_query: OwnerOfResponse = query(
         &mut app,
@@ -648,12 +652,14 @@ fn test_invalid_payment_native() {
 
     // cw721_owner has not received the ARCH amount
     let cw721_owner_balance: Coin = bank_query(&mut app, &cw721_owner);
-    dbg!(cw721_owner_balance.amount);
+    // dbg!(cw721_owner_balance.amount);
 
     // arch_owner has retained their original balance (minus gas fees)
     let arch_owner_balance: Coin = bank_query(&mut app, &cw721_owner);
-    dbg!(arch_owner_balance.amount);
-   
+    // dbg!(arch_owner_balance.amount);
+
+    assert_eq!(cw721_owner_balance.amount.u128(), 0);
+    assert_eq!(arch_owner_balance.amount.u128(), 0);
     assert_eq!(owner_query.owner, cw721_owner);
 }
 
@@ -704,7 +710,7 @@ fn test_overpayment_native() {
         token_id: token_id.clone(),    
         expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),
         price: Uint128::from(1000000000000000000_u128), // 1 ARCH as aarch
-        swap_type:SwapType::Sale,
+        swap_type: SwapType::Sale,
     };
     let finish_msg = creation_msg.clone();
 
@@ -736,9 +742,6 @@ fn test_overpayment_native() {
         )
         .unwrap();
 
-    // Swap is now closed (open == false)
-
-
     // arch_owner has received the NFT
     let owner_query: OwnerOfResponse = query(
         &mut app,
@@ -751,8 +754,119 @@ fn test_overpayment_native() {
 
     // cw721_owner has received the ARCH amount
     let balance_query: Coin = bank_query(&mut app, &cw721_owner);
-   
-   
+
     assert_eq!(owner_query.owner, arch_owner);
     assert_eq!(balance_query.amount, Uint128::from(10000000000000000000_u128));
+}
+
+// Listing swaps should be enumerable
+#[test]
+fn test_list_pagination() {
+    let mut app = mock_app();
+    
+    // Swap owner deploys
+    let swap_admin = Addr::unchecked("swap_deployer");
+
+    // cw721_owner owns cw721 tokens
+    let cw721_owner = Addr::unchecked("cw721_owner");
+
+    // cw721_owner creates cw721 token contract
+    let nft = create_cw721(&mut app, &cw721_owner);
+
+    // swap_admin creates the swap contract 
+    let swap = create_swap(&mut app, &swap_admin, nft.clone());
+    let swap_inst = swap.clone();
+
+    // cw721_owner mints 15 cw721 tokens 
+    let token_ids = vec![
+        // Page 1 of 3
+        "token1".to_string(),"token2".to_string(),"token3".to_string(),"token4".to_string(),"token5".to_string(),
+        // Page 2 of 3
+        "token6".to_string(),"token7".to_string(),"token8".to_string(),"token9".to_string(),"token10".to_string(),
+        // Page 3 of 3
+        "token11".to_string(),"token12".to_string(),"token13".to_string(),"token14".to_string(),"token15".to_string(),
+    ];
+    let token_uri = "https://www.merriam-webster.com/dictionary/petrify".to_string();
+
+    // Mint 15 tokens and create a swap for each
+    for token_id in token_ids.iter() {
+        // Mint msg
+        let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Extension> {
+            token_id: token_id.clone(),
+            owner: cw721_owner.to_string(),
+            token_uri: Some(token_uri.clone()),
+            extension: None,
+        });
+        // Do minting
+        app
+            .execute_contract(cw721_owner.clone(), nft.clone(), &mint_msg, &[])
+            .unwrap();
+
+        // Approval msg
+        let nft_approve_msg = Cw721ExecuteMsg::Approve::<Extension> {
+            spender: swap.to_string(),
+            token_id: token_id.clone(),
+            expires: None,
+        };
+        // Do approve marketplace as spender
+        app
+            .execute_contract(cw721_owner.clone(), nft.clone(), &nft_approve_msg, &[])
+            .unwrap();
+
+        // Swap msg
+        let creation_msg = SwapMsg {
+            id: token_id.clone(),
+            payment_token: None,
+            token_id: token_id.clone(),    
+            expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),
+            price: Uint128::from(1000000000000000000_u128), // 1 ARCH as aarch
+            swap_type: SwapType::Sale,
+        };
+        // Create swap listing
+        app
+            .execute_contract(cw721_owner.clone(), swap_inst.clone(), &ExecuteMsg::Create(creation_msg), &[])
+            .unwrap();
+    }
+
+    // Query List entry point for 3 pages
+    // Paging size
+    let limit: u32 = 5;
+    // Page 1
+    let page_1: ListResponse = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::List {
+            start_after: None,
+            limit: Some(limit.clone()),
+        }
+    ).unwrap();
+    // Page 2
+    let page_2: ListResponse = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::List {
+            start_after: Some(page_1.swaps[4].clone()),
+            limit: Some(limit.clone()),
+        }
+    ).unwrap();
+    // Page 3
+    let page_3: ListResponse = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::List {
+            start_after: Some(page_2.swaps[4].clone()),
+            limit: Some(limit.clone()),
+        }
+    ).unwrap();
+    
+    // Paginated results must not have any duplicates
+    let mut all_res = page_1.swaps.clone();
+    all_res.append(&mut page_2.swaps.clone());
+    all_res.append(&mut page_3.swaps.clone());
+    assert!(has_unique_elements(all_res));
+
+    // Paginated results must each have a size equal to `limit`
+    assert_eq!(page_1.swaps.len(), 5);
+    assert_eq!(page_2.swaps.len(), 5);
+    assert_eq!(page_3.swaps.len(), 5);
 }
