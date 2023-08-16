@@ -395,9 +395,9 @@ pub fn check_sent_required_payment(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MOCK_CONTRACT_ADDR};
-    use cosmwasm_std::{from_binary, Uint128};
-    use cw20::Expiration;
+    use cosmwasm_std::testing::{
+        mock_dependencies, mock_env, mock_info, MOCK_CONTRACT_ADDR
+    };
 
     #[test]
     fn test_instantiate() {
