@@ -46,11 +46,17 @@ pub enum QueryMsg {
     /// Returns the details of the named swap, error if not created.
     /// Return type: DetailsResponse.
     Details { id: String },
+    GetTotal {
+        token_id: String, 
+        swap_type:SwapType      
+    },
     GetOffers {
-        token_id: String,        
+        token_id: String,      
+        page:u32  
     },
     GetListings {
-        token_id: String,        
+        token_id: String, 
+        page:u32       
     },
 }
 
