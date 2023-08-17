@@ -18,7 +18,10 @@ use crate::state::{all_swap_ids, CW721Swap, Config, CONFIG, SWAPS,SwapType};
 
 use cw2::{get_contract_version, set_contract_version};
 
-pub static DENOM: &str = "aarch";
+// Mainnet
+// pub static DENOM: &str = "aarch";
+// Testnet
+pub static DENOM: &str = "aconst";
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:archid-marketplace";
@@ -74,6 +77,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetTotal { token_id ,swap_type} => {
             to_binary(&query_swap_total(deps, token_id,swap_type)?)
         }
+        QueryMsg::SwapsOf { address } => {
+            to_binary(&query_swaps_by_creator(deps, address)?)
+        }
     }
 }
 
@@ -102,9 +108,6 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 
 fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
     let swap = SWAPS.load(deps.storage, &id)?;
-
-    // Convert balance to human balance
-
     let details = DetailsResponse {
         creator: swap.creator,
         contract: swap.nft_contract,
@@ -165,6 +168,23 @@ fn query_swap_total(deps: Deps, id: String, side: SwapType) -> StdResult<u128> {
         .collect();
     
     Ok(results.len() as u128)
+}
+fn query_swaps_by_creator(deps: Deps, address: Addr) -> StdResult<Vec<CW721Swap>> {
+    let config = CONFIG.load(deps.storage)?;
+    let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
+        .range(deps.storage, None, None, Order::Ascending)
+        .collect();
+
+    let results = swaps
+        .unwrap()
+        .into_iter()
+        .map(|t| t.1)
+        .filter(|item| {
+            item.nft_contract == config.cw721 && item.creator == address
+        })
+        .collect();
+
+    Ok(results)
 }
 pub fn execute_create(
     deps: DepsMut,
