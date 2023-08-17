@@ -17,6 +17,14 @@
         "project": "archid-marketplace",
         "type": "store",
         "chainId": "constantine-3",
+        "codeId": 1134,
+        "checksum": "75cb727294ad366899580dc5892d5a93fcf0aaef7f04c9c8303355ef378b7522",
+        "txhash": "30363D677D12991169E5CE07C86F1ED213675D6C087827CDED65C956C7604FCE"
+      },
+      {
+        "project": "archid-marketplace",
+        "type": "store",
+        "chainId": "constantine-3",
         "codeId": 1123,
         "checksum": "834bcaf04a375ed9cb68736557f5418a8d1682dc567d4303cdd7ecc2ce3cee67",
         "txhash": "23078F44B34F9F45872A4B09F557C61EC349EE5ADE5B4705D572DFE4B7D06680"
