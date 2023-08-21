@@ -15,6 +15,40 @@
     "deployments": [
       {
         "project": "archid-marketplace",
+        "type": "set-metadata",
+        "chainId": "archway-1",
+        "codeId": 127,
+        "txhash": "1F205AA2ED6B590D9AAA73479748F89AE86924EC071BD208F692CED7109870C1",
+        "contract": "archway1qcejwf6rpgn2xgryyce4x536q4lrue7k2rdxzx8h9jazm44gqf9s5vrsva",
+        "contractMetadata": {
+          "ownerAddress": "archway1n7d4c52knwqqkw9j975ranknkp4fn3we0unrp6",
+          "rewardsAddress": "archway1n7d4c52knwqqkw9j975ranknkp4fn3we0unrp6"
+        }
+      },
+      {
+        "project": "archid-marketplace",
+        "type": "instantiate",
+        "chainId": "archway-1",
+        "codeId": 127,
+        "txhash": "1C7C3E061455086565E3B990246461DAC4D23369F3BF8F3BAC861AB9BA04FEEE",
+        "address": "archway1qcejwf6rpgn2xgryyce4x536q4lrue7k2rdxzx8h9jazm44gqf9s5vrsva",
+        "admin": "archway1n7d4c52knwqqkw9j975ranknkp4fn3we0unrp6",
+        "label": "archid-marketplace-v1",
+        "args": {
+          "admin": "archway1n7d4c52knwqqkw9j975ranknkp4fn3we0unrp6",
+          "cw721": "archway1cf5rq0amcl5m2flqrtl4gw2mdl3zdec9vlp5hfa9hgxlwnmrlazsdycu4l"
+        }
+      },
+      {
+        "project": "archid-marketplace",
+        "type": "store",
+        "chainId": "archway-1",
+        "codeId": 127,
+        "checksum": "d38d98d2b31f5ee51294706a3619560ed982106795bd31ff31d5dabf1f4cdacd",
+        "txhash": "39AEEA696A7C69F4F1A35690DA7B3756275E6A550480B4611922BA054EB951FA"
+      },
+      {
+        "project": "archid-marketplace",
         "type": "store",
         "chainId": "constantine-3",
         "codeId": 1162,
