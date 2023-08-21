@@ -19,9 +19,9 @@ use crate::state::{all_swap_ids, CW721Swap, Config, CONFIG, SWAPS,SwapType};
 use cw2::{get_contract_version, set_contract_version};
 
 // Mainnet
-// pub static DENOM: &str = "aarch";
+pub static DENOM: &str = "aarch";
 // Testnet
-pub static DENOM: &str = "aconst";
+// pub static DENOM: &str = "aconst";
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:archid-marketplace";
@@ -68,13 +68,13 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::List { start_after, limit } => to_binary(&query_list(deps, start_after, limit)?),
         QueryMsg::Details { id } => to_binary(&query_details(deps, id)?),
-        QueryMsg::GetOffers { token_id ,page} => {
+        QueryMsg::GetOffers { token_id, page} => {
             to_binary(&query_swaps(deps, token_id, SwapType::Offer,page)?)
         },
-        QueryMsg::GetListings { token_id ,page} => {
+        QueryMsg::GetListings { token_id, page} => {
             to_binary(&query_swaps(deps, token_id, SwapType::Sale,page)?)
         }
-        QueryMsg::GetTotal { token_id ,swap_type} => {
+        QueryMsg::GetTotal { token_id, swap_type} => {
             to_binary(&query_swap_total(deps, token_id,swap_type)?)
         }
         QueryMsg::SwapsOf { address } => {
