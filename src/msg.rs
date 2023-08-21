@@ -45,7 +45,6 @@ pub enum QueryMsg {
     },
     // Count total `SwapType::Offer` or `SwapType::Sale`
     GetTotal {
-        token_id: String, 
         swap_type: SwapType,
     },
     /// Get all swaps of type `SwapType::Offer`

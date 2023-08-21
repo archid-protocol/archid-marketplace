@@ -40,15 +40,11 @@
         "get_total": {
           "type": "object",
           "required": [
-            "swap_type",
-            "token_id"
+            "swap_type"
           ],
           "properties": {
             "swap_type": {
               "$ref": "#/definitions/SwapType"
-            },
-            "token_id": {
-              "type": "string"
             }
           }
         }
