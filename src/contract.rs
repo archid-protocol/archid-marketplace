@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{
     entry_point, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut,Order, Env,
-    MessageInfo, Reply, Response, StdResult, SubMsgResult, WasmMsg,
+    MessageInfo, Reply, Response, StdResult, SubMsgResult, Uint128, WasmMsg,
 };
 use cw_storage_plus::Bound;
 
@@ -19,9 +19,9 @@ use crate::state::{all_swap_ids, CW721Swap, Config, CONFIG, SWAPS,SwapType};
 use cw2::{get_contract_version, set_contract_version};
 
 // Mainnet
-pub static DENOM: &str = "aarch";
+// pub static DENOM: &str = "aarch";
 // Testnet
-// pub static DENOM: &str = "aconst";
+pub static DENOM: &str = "aconst";
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:archid-marketplace";
@@ -80,6 +80,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::SwapsOf { address } => {
             to_binary(&query_swaps_by_creator(deps, address)?)
         }
+        QueryMsg::SwapsByPrice {min, max, swap_type, page} => {
+            to_binary(&query_swaps_by_price(deps, min, max, swap_type, page)?)
+        }
     }
 }
 
@@ -134,7 +137,7 @@ fn query_list(
         swaps: all_swap_ids(deps.storage, start, limit)?,
     })
 }
-fn query_swaps(deps: Deps, id: String, side: SwapType,page:u32) -> StdResult<Vec<CW721Swap>> {
+fn query_swaps(deps: Deps, id: String, side: SwapType, page: u32) -> StdResult<Vec<CW721Swap>> {
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
         .range(deps.storage, None, None, Order::Ascending)
@@ -148,8 +151,10 @@ fn query_swaps(deps: Deps, id: String, side: SwapType,page:u32) -> StdResult<Vec
             item.nft_contract == config.cw721 && item.token_id == id && item.swap_type == side
         })
         .collect();
-        let start=(page*MAX_LIMIT) as usize;
-        let end=((page+1)*MAX_LIMIT) as usize;
+
+    let start = (page*MAX_LIMIT) as usize;
+    let end = ((page+1)*MAX_LIMIT) as usize;
+
     Ok(results[start..end].to_vec())
 }
 fn query_swap_total(deps: Deps, side: SwapType) -> StdResult<u128> {
@@ -169,6 +174,7 @@ fn query_swap_total(deps: Deps, side: SwapType) -> StdResult<u128> {
     
     Ok(results.len() as u128)
 }
+
 fn query_swaps_by_creator(deps: Deps, address: Addr) -> StdResult<Vec<CW721Swap>> {
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
@@ -186,6 +192,55 @@ fn query_swaps_by_creator(deps: Deps, address: Addr) -> StdResult<Vec<CW721Swap>
 
     Ok(results)
 }
+
+fn query_swaps_by_price(
+    deps: Deps, 
+    min: Option<Uint128>, 
+    max: Option<Uint128>, 
+    swap_type: Option<SwapType>,
+    page: u32,
+) -> StdResult<Vec<CW721Swap>> {
+    let min: Uint128 = if min.is_some() { min.unwrap() } else { Uint128::from(0_u32) };
+    let side: SwapType = if swap_type.is_some() { swap_type.unwrap() } else { SwapType::Offer };
+
+    let config = CONFIG.load(deps.storage)?;
+    let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
+        .range(deps.storage, None, None, Order::Ascending)
+        .collect();
+
+    // With Max range filter
+    let results:Vec<CW721Swap> = if max.is_some() { 
+        swaps
+            .unwrap()
+            .into_iter()
+            .map(|t| t.1)
+            .filter(|item| {
+                item.nft_contract == config.cw721 
+                && item.price.u128() >= min.u128()
+                && item.price.u128() <= max.unwrap().u128()
+                && item.swap_type == side
+            })
+            .collect()
+    // Using just Min filter
+    } else {
+        swaps
+            .unwrap()
+            .into_iter()
+            .map(|t| t.1)
+            .filter(|item| {
+                item.nft_contract == config.cw721 
+                && item.price.u128() >= min.u128()
+                && item.swap_type == side
+            })
+            .collect()
+    };
+
+    let start = (page*MAX_LIMIT) as usize;
+    let end = ((page+1)*MAX_LIMIT) as usize;
+
+    Ok(results[start..end].to_vec())
+}
+
 pub fn execute_create(
     deps: DepsMut,
     env: Env,
