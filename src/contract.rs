@@ -202,7 +202,6 @@ fn query_swaps_by_price(
 ) -> StdResult<Vec<CW721Swap>> {
     let min: Uint128 = if min.is_some() { min.unwrap() } else { Uint128::from(0_u32) };
     let side: SwapType = if swap_type.is_some() { swap_type.unwrap() } else { SwapType::Offer };
-
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
         .range(deps.storage, None, None, Order::Ascending)
