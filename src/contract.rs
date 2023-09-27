@@ -80,8 +80,14 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::SwapsOf { address } => {
             to_binary(&query_swaps_by_creator(deps, address)?)
         }
-        QueryMsg::SwapsByPrice {min, max, swap_type, page} => {
+        QueryMsg::SwapsByPrice { min, max, swap_type, page } => {
             to_binary(&query_swaps_by_price(deps, min, max, swap_type, page)?)
+        }
+        QueryMsg::SwapsByDenom { payment_token, swap_type, page } => {
+            to_binary(&query_swaps_by_denom(deps, payment_token, swap_type, page)?)
+        }
+        QueryMsg::SwapsByPaymentType { cw20, swap_type, page } => {
+            to_binary(&query_swaps_by_payment_type(deps, cw20, swap_type, page)?)
         }
     }
 }
@@ -243,6 +249,96 @@ fn query_swaps_by_price(
     Ok(results[start..end].to_vec())
 }
 
+fn query_swaps_by_denom(
+    deps: Deps, 
+    payment_token: Option<Addr>, 
+    swap_type: Option<SwapType>,
+    page: Option<u32>,
+) -> StdResult<Vec<CW721Swap>> {
+    let side: SwapType = swap_type.unwrap_or(SwapType::Sale);
+    let page: u32 = page.unwrap_or(0_u32);
+    let config = CONFIG.load(deps.storage)?;
+    let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
+        .range(deps.storage, None, None, Order::Ascending)
+        .collect();
+
+    // Requested cw20 denom
+    let results: Vec<CW721Swap> = if let Some(token_addr) = payment_token {
+        swaps
+            .unwrap()
+            .into_iter()
+            .map(|t| t.1)
+            .filter(|item| {
+                item.nft_contract == config.cw721 
+                && item.payment_token.clone().unwrap() == token_addr
+                && item.swap_type == side
+            })
+            .collect()
+    // Native ARCH denom
+    } else {
+        swaps
+            .unwrap()
+            .into_iter()
+            .map(|t| t.1)
+            .filter(|item| {
+                item.nft_contract == config.cw721 
+                && item.payment_token.is_none()
+                && item.swap_type == side
+            })
+            .collect()
+    };
+
+    let start = (page*MAX_LIMIT) as usize;
+    let end = ((page+1)*MAX_LIMIT) as usize;
+
+    Ok(results[start..end].to_vec())
+}
+
+fn query_swaps_by_payment_type(
+    deps: Deps, 
+    cw20: bool,
+    swap_type: Option<SwapType>,
+    page: Option<u32>,
+) -> StdResult<Vec<CW721Swap>> {
+    let side: SwapType = swap_type.unwrap_or(SwapType::Sale);
+    let page: u32 = page.unwrap_or(0_u32);
+    let config = CONFIG.load(deps.storage)?;
+    let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
+        .range(deps.storage, None, None, Order::Ascending)
+        .collect();
+
+    // cw20 swap
+    let results: Vec<CW721Swap> = if cw20 == true {
+        swaps
+            .unwrap()
+            .into_iter()
+            .map(|t| t.1)
+            .filter(|item| {
+                item.nft_contract == config.cw721 
+                && item.payment_token.is_some()
+                && item.swap_type == side
+            })
+            .collect()
+    // ARCH swap
+    } else {
+        swaps
+            .unwrap()
+            .into_iter()
+            .map(|t| t.1)
+            .filter(|item| {
+                item.nft_contract == config.cw721 
+                && item.payment_token.is_none()
+                && item.swap_type == side
+            })
+            .collect()
+    };
+
+    let start = (page*MAX_LIMIT) as usize;
+    let end = ((page+1)*MAX_LIMIT) as usize;
+
+    Ok(results[start..end].to_vec())
+}
+
 pub fn execute_create(
     deps: DepsMut,
     env: Env,
@@ -288,6 +384,7 @@ pub fn execute_create(
         .add_attribute("payment_token", payment_token)
         .add_attribute("price", swap.price))
 }
+
 pub fn execute_update(
     deps: DepsMut,
     _env: Env,
@@ -316,6 +413,7 @@ pub fn execute_update(
     .add_attribute("token_id", &swap.token_id))
 
 }
+
 pub fn execute_finish(
     deps: DepsMut,
     env: Env,

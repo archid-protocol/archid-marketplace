@@ -67,6 +67,19 @@ pub enum QueryMsg {
         swap_type: Option<SwapType>,
         page: Option<u32>,
     },
+    /// Show all swaps of a given denom (contract address)
+    /// Defaults to ARCH if no contract is sent
+    SwapsByDenom {
+        payment_token: Option<Addr>,
+        swap_type: Option<SwapType>,
+        page: Option<u32>,
+    },
+    /// Show all cw20 swaps, or all ARCH swaps
+    SwapsByPaymentType {
+        cw20: bool,
+        swap_type: Option<SwapType>,
+        page: Option<u32>,
+    },
 
     /// Returns the details of the named swap, error if not created.
     /// Return type: DetailsResponse.
