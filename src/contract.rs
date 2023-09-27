@@ -204,7 +204,7 @@ fn query_swaps_by_price(
     page: Option<u32>,
 ) -> StdResult<Vec<CW721Swap>> {
     let min: Uint128 = min.unwrap_or(Uint128::from(0_u32));
-    let side: SwapType = swap_type.unwrap_or(SwapType::Offer);
+    let side: SwapType = swap_type.unwrap_or(SwapType::Sale);
     let page: u32 = page.unwrap_or(0_u32);
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
