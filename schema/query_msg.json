@@ -184,6 +184,88 @@
       "additionalProperties": false
     },
     {
+      "description": "Show all swaps of a given denom (contract address) Defaults to ARCH if no contract is sent",
+      "type": "object",
+      "required": [
+        "swaps_by_denom"
+      ],
+      "properties": {
+        "swaps_by_denom": {
+          "type": "object",
+          "properties": {
+            "page": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "payment_token": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Addr"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "swap_type": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/SwapType"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Show all cw20 swaps, or all ARCH swaps",
+      "type": "object",
+      "required": [
+        "swaps_by_payment_type"
+      ],
+      "properties": {
+        "swaps_by_payment_type": {
+          "type": "object",
+          "required": [
+            "cw20"
+          ],
+          "properties": {
+            "cw20": {
+              "type": "boolean"
+            },
+            "page": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "swap_type": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/SwapType"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
       "description": "Returns the details of the named swap, error if not created. Return type: DetailsResponse.",
       "type": "object",
       "required": [
