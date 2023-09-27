@@ -137,7 +137,10 @@ fn query_list(
         swaps: all_swap_ids(deps.storage, start, limit)?,
     })
 }
-fn query_swaps(deps: Deps, id: String, side: SwapType, page: u32) -> StdResult<Vec<CW721Swap>> {
+
+#[allow(clippy::unnecessary_unwrap)]
+fn query_swaps(deps: Deps, id: String, side: SwapType, page: Option<u32>) -> StdResult<Vec<CW721Swap>> {
+    let page: u32 = if page.is_some() { page.unwrap() } else { 0_u32 };
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
         .range(deps.storage, None, None, Order::Ascending)
@@ -157,6 +160,7 @@ fn query_swaps(deps: Deps, id: String, side: SwapType, page: u32) -> StdResult<V
 
     Ok(results[start..end].to_vec())
 }
+
 fn query_swap_total(deps: Deps, side: SwapType) -> StdResult<u128> {
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
@@ -193,15 +197,17 @@ fn query_swaps_by_creator(deps: Deps, address: Addr) -> StdResult<Vec<CW721Swap>
     Ok(results)
 }
 
+#[allow(clippy::unnecessary_unwrap)]
 fn query_swaps_by_price(
     deps: Deps, 
     min: Option<Uint128>, 
     max: Option<Uint128>, 
     swap_type: Option<SwapType>,
-    page: u32,
+    page: Option<u32>,
 ) -> StdResult<Vec<CW721Swap>> {
     let min: Uint128 = if min.is_some() { min.unwrap() } else { Uint128::from(0_u32) };
     let side: SwapType = if swap_type.is_some() { swap_type.unwrap() } else { SwapType::Offer };
+    let page: u32 = if page.is_some() { page.unwrap() } else { 0_u32 };
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
         .range(deps.storage, None, None, Order::Ascending)

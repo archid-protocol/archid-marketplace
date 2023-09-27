@@ -49,13 +49,13 @@ pub enum QueryMsg {
     },
     /// Get all swaps of type `SwapType::Offer`
     GetOffers {
-        token_id: String,      
-        page: u32,
+        token_id: String,
+        page: Option<u32>,
     },
     /// Get all swaps of type `SwapType::Sale`
     GetListings {
-        token_id: String, 
-        page: u32,
+        token_id: String,
+        page: Option<u32>,
     },
     /// Show all swaps created by a specific address
     /// Results include both `SwapType::Offer` and `SwapType::Sale`
@@ -65,7 +65,7 @@ pub enum QueryMsg {
         min: Option<Uint128>,
         max: Option<Uint128>,
         swap_type: Option<SwapType>,
-        page: u32,
+        page: Option<u32>,
     },
 
     /// Returns the details of the named swap, error if not created.
