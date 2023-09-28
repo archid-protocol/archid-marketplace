@@ -15,13 +15,13 @@ pub struct Config {
     pub admin: Addr,
     pub cw721: Addr,
 }
-#[derive(Serialize, Deserialize, Clone,Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum SwapType{
     Offer,
     Sale
 }
 // swap type of false equals offer, swap type of true equals buy
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CW721Swap {    
     pub creator: Addr,
     pub nft_contract: Addr,

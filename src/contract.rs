@@ -159,7 +159,7 @@ fn query_swaps(
         .range(deps.storage, None, None, Order::Ascending)
         .collect();
 
-    let results:Vec<CW721Swap> = swaps
+    let results: Vec<CW721Swap> = swaps
         .unwrap()
         .into_iter()
         .map(|t| t.1)
@@ -169,11 +169,14 @@ fn query_swaps(
         })
         .collect();
     
-    if limit < DEFAULT_LIMIT {
+    let total_results = results.len() as u32;
+    if total_results < limit {
+        limit = total_results;
+    } else if limit < DEFAULT_LIMIT {
         limit = DEFAULT_LIMIT;
     } else if limit > MAX_LIMIT {
         limit = MAX_LIMIT;
-    };
+    }
 
     let start = (page*limit) as usize;
     let end = ((page+1)*limit) as usize;
@@ -187,7 +190,7 @@ fn query_swap_total(deps: Deps, side: SwapType) -> StdResult<u128> {
         .range(deps.storage, None, None, Order::Ascending)
         .collect();
 
-    let results:Vec<CW721Swap> = swaps
+    let results: Vec<CW721Swap> = swaps
         .unwrap()
         .into_iter()
         .map(|t| t.1)
@@ -225,11 +228,14 @@ fn query_swaps_by_creator(
         })
         .collect();
 
-    if limit < DEFAULT_LIMIT {
+    let total_results = results.len() as u32;
+    if total_results < limit {
+        limit = total_results;
+    } else if limit < DEFAULT_LIMIT {
         limit = DEFAULT_LIMIT;
     } else if limit > MAX_LIMIT {
         limit = MAX_LIMIT;
-    };
+    }
 
     let start = (page*limit) as usize;
     let end = ((page+1)*limit) as usize;
@@ -280,11 +286,14 @@ fn query_swaps_by_price(
             .collect()
     };
 
-    if limit < DEFAULT_LIMIT {
+    let total_results = results.len() as u32;
+    if total_results < limit {
+        limit = total_results;
+    } else if limit < DEFAULT_LIMIT {
         limit = DEFAULT_LIMIT;
     } else if limit > MAX_LIMIT {
         limit = MAX_LIMIT;
-    };
+    }
 
     let start = (page*limit) as usize;
     let end = ((page+1)*limit) as usize;
@@ -333,11 +342,14 @@ fn query_swaps_by_denom(
             .collect()
     };
 
-    if limit < DEFAULT_LIMIT {
+    let total_results = results.len() as u32;
+    if total_results < limit {
+        limit = total_results;
+    } else if limit < DEFAULT_LIMIT {
         limit = DEFAULT_LIMIT;
     } else if limit > MAX_LIMIT {
         limit = MAX_LIMIT;
-    };
+    }
 
     let start = (page*limit) as usize;
     let end = ((page+1)*limit) as usize;
@@ -386,11 +398,14 @@ fn query_swaps_by_payment_type(
             .collect()
     };
 
-    if limit < DEFAULT_LIMIT {
+    let total_results = results.len() as u32;
+    if total_results < limit {
+        limit = total_results;
+    } else if limit < DEFAULT_LIMIT {
         limit = DEFAULT_LIMIT;
     } else if limit > MAX_LIMIT {
         limit = MAX_LIMIT;
-    };
+    }
 
     let start = (page*limit) as usize;
     let end = ((page+1)*limit) as usize;
