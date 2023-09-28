@@ -128,6 +128,8 @@ fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
     };
     Ok(details)
 }
+
+// Default and Max page sizes for paginated queries
 const MAX_LIMIT: u32 = 30;
 const DEFAULT_LIMIT: u32 = 10;
 
@@ -162,7 +164,9 @@ fn query_swaps(
         .into_iter()
         .map(|t| t.1)
         .filter(|item| {
-            item.nft_contract == config.cw721 && item.token_id == id && item.swap_type == side
+            item.nft_contract == config.cw721 
+            && item.token_id == id 
+            && item.swap_type == side
         })
         .collect();
     
