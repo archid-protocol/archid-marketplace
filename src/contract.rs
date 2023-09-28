@@ -482,9 +482,9 @@ pub fn execute_update(
     SWAPS.remove(deps.storage, &msg.id);
     SWAPS.save(deps.storage, &msg.id, &swap)?;
     Ok(Response::new()
-    .add_attribute("action", "update")
-    .add_attribute("swap_id", &msg.id)
-    .add_attribute("token_id", &swap.token_id))
+        .add_attribute("action", "update")
+        .add_attribute("swap_id", &msg.id)
+        .add_attribute("token_id", &swap.token_id))
 
 }
 
