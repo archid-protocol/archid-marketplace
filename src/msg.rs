@@ -58,7 +58,7 @@ pub enum QueryMsg {
         limit: Option<u32>,
     },
     /// Show all swaps created by a specific address
-    /// Results include both `SwapType::Offer` and `SwapType::Sale`
+    /// Defaults to SwapType::Sale if no `swap_type`
     SwapsOf { 
         address: Addr,
         swap_type: Option<SwapType>,

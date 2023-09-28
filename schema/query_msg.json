@@ -114,7 +114,7 @@
       "additionalProperties": false
     },
     {
-      "description": "Show all swaps created by a specific address Results include both `SwapType::Offer` and `SwapType::Sale`",
+      "description": "Show all swaps created by a specific address Defaults to SwapType::Sale if no `swap_type`",
       "type": "object",
       "required": [
         "swaps_of"
