@@ -61,7 +61,12 @@ pub enum QueryMsg {
     },
     /// Show all swaps created by a specific address
     /// Results include both `SwapType::Offer` and `SwapType::Sale`
-    SwapsOf { address: Addr },
+    SwapsOf { 
+        address: Addr,
+        swap_type: Option<SwapType>,
+        page: Option<u32>,
+        limit: Option<u32>,
+    },
     /// Show all swaps of a given price range
     SwapsByPrice { 
         min: Option<Uint128>,

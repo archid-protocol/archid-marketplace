@@ -77,8 +77,8 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetTotal { swap_type } => {
             to_binary(&query_swap_total(deps, swap_type)?)
         }
-        QueryMsg::SwapsOf { address } => {
-            to_binary(&query_swaps_by_creator(deps, address)?)
+        QueryMsg::SwapsOf { address, swap_type, page, limit } => {
+            to_binary(&query_swaps_by_creator(deps, address, swap_type, page, limit)?)
         }
         QueryMsg::SwapsByPrice { min, max, swap_type, page, limit } => {
             to_binary(&query_swaps_by_price(deps, min, max, swap_type, page, limit)?)
@@ -196,22 +196,42 @@ fn query_swap_total(deps: Deps, side: SwapType) -> StdResult<u128> {
     Ok(results.len() as u128)
 }
 
-fn query_swaps_by_creator(deps: Deps, address: Addr) -> StdResult<Vec<CW721Swap>> {
+fn query_swaps_by_creator(
+    deps: Deps, 
+    address: Addr,
+    swap_type: Option<SwapType>,
+    page: Option<u32>,
+    limit: Option<u32>,
+) -> StdResult<Vec<CW721Swap>> {
+    let side: SwapType = swap_type.unwrap_or(SwapType::Sale);
+    let page: u32 = page.unwrap_or(0_u32);
+    let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
         .range(deps.storage, None, None, Order::Ascending)
         .collect();
 
-    let results = swaps
+    let results: Vec<CW721Swap> = swaps
         .unwrap()
         .into_iter()
         .map(|t| t.1)
         .filter(|item| {
-            item.nft_contract == config.cw721 && item.creator == address
+            item.nft_contract == config.cw721 
+            && item.creator == address
+            && item.swap_type == side
         })
         .collect();
 
-    Ok(results)
+    if limit < DEFAULT_LIMIT {
+        limit = DEFAULT_LIMIT;
+    } else if limit > MAX_LIMIT {
+        limit = MAX_LIMIT;
+    };
+
+    let start = (page*limit) as usize;
+    let end = ((page+1)*limit) as usize;
+
+    Ok(results[start..end].to_vec())
 }
 
 fn query_swaps_by_price(

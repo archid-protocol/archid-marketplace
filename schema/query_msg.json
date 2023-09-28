@@ -140,6 +140,32 @@
           "properties": {
             "address": {
               "$ref": "#/definitions/Addr"
+            },
+            "limit": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "page": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "swap_type": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/SwapType"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           }
         }
