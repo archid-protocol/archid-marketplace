@@ -130,7 +130,7 @@ fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
 }
 
 // Default and Max page sizes for paginated queries
-const MAX_LIMIT: u32 = 30;
+const MAX_LIMIT: u32 = 100;
 const DEFAULT_LIMIT: u32 = 10;
 
 fn query_list(
