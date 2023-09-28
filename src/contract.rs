@@ -308,7 +308,7 @@ fn query_swaps_by_payment_type(
         .collect();
 
     // cw20 swap
-    let results: Vec<CW721Swap> = if cw20 == true {
+    let results: Vec<CW721Swap> = if cw20 {
         swaps
             .unwrap()
             .into_iter()
