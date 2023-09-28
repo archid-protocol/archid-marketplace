@@ -51,11 +51,13 @@ pub enum QueryMsg {
     GetOffers {
         token_id: String,
         page: Option<u32>,
+        limit: Option<u32>,
     },
     /// Get all swaps of type `SwapType::Sale`
     GetListings {
         token_id: String,
         page: Option<u32>,
+        limit: Option<u32>,
     },
     /// Show all swaps created by a specific address
     /// Results include both `SwapType::Offer` and `SwapType::Sale`
@@ -66,6 +68,7 @@ pub enum QueryMsg {
         max: Option<Uint128>,
         swap_type: Option<SwapType>,
         page: Option<u32>,
+        limit: Option<u32>,
     },
     /// Show all swaps of a given denom (contract address)
     /// Defaults to ARCH if no contract is sent
@@ -73,12 +76,14 @@ pub enum QueryMsg {
         payment_token: Option<Addr>,
         swap_type: Option<SwapType>,
         page: Option<u32>,
+        limit: Option<u32>,
     },
     /// Show all cw20 swaps, or all ARCH swaps
     SwapsByPaymentType {
         cw20: bool,
         swap_type: Option<SwapType>,
         page: Option<u32>,
+        limit: Option<u32>,
     },
 
     /// Returns the details of the named swap, error if not created.

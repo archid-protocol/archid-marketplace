@@ -68,11 +68,11 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::List { start_after, limit } => to_binary(&query_list(deps, start_after, limit)?),
         QueryMsg::Details { id } => to_binary(&query_details(deps, id)?),
-        QueryMsg::GetOffers { token_id, page } => {
-            to_binary(&query_swaps(deps, token_id, SwapType::Offer, page)?)
+        QueryMsg::GetOffers { token_id, page, limit } => {
+            to_binary(&query_swaps(deps, token_id, SwapType::Offer, page, limit)?)
         },
-        QueryMsg::GetListings { token_id, page } => {
-            to_binary(&query_swaps(deps, token_id, SwapType::Sale, page)?)
+        QueryMsg::GetListings { token_id, page, limit } => {
+            to_binary(&query_swaps(deps, token_id, SwapType::Sale, page, limit)?)
         }
         QueryMsg::GetTotal { swap_type } => {
             to_binary(&query_swap_total(deps, swap_type)?)
@@ -80,14 +80,14 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::SwapsOf { address } => {
             to_binary(&query_swaps_by_creator(deps, address)?)
         }
-        QueryMsg::SwapsByPrice { min, max, swap_type, page } => {
-            to_binary(&query_swaps_by_price(deps, min, max, swap_type, page)?)
+        QueryMsg::SwapsByPrice { min, max, swap_type, page, limit } => {
+            to_binary(&query_swaps_by_price(deps, min, max, swap_type, page, limit)?)
         }
-        QueryMsg::SwapsByDenom { payment_token, swap_type, page } => {
-            to_binary(&query_swaps_by_denom(deps, payment_token, swap_type, page)?)
+        QueryMsg::SwapsByDenom { payment_token, swap_type, page, limit } => {
+            to_binary(&query_swaps_by_denom(deps, payment_token, swap_type, page, limit)?)
         }
-        QueryMsg::SwapsByPaymentType { cw20, swap_type, page } => {
-            to_binary(&query_swaps_by_payment_type(deps, cw20, swap_type, page)?)
+        QueryMsg::SwapsByPaymentType { cw20, swap_type, page, limit } => {
+            to_binary(&query_swaps_by_payment_type(deps, cw20, swap_type, page, limit)?)
         }
     }
 }
@@ -144,8 +144,14 @@ fn query_list(
     })
 }
 
-fn query_swaps(deps: Deps, id: String, side: SwapType, page: Option<u32>) -> StdResult<Vec<CW721Swap>> {
+fn query_swaps(
+    deps: Deps, id: String, 
+    side: SwapType, 
+    page: Option<u32>, 
+    limit: Option<u32>,
+) -> StdResult<Vec<CW721Swap>> {
     let page: u32 = page.unwrap_or(0_u32);
+    let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
         .range(deps.storage, None, None, Order::Ascending)
@@ -159,9 +165,15 @@ fn query_swaps(deps: Deps, id: String, side: SwapType, page: Option<u32>) -> Std
             item.nft_contract == config.cw721 && item.token_id == id && item.swap_type == side
         })
         .collect();
+    
+    if limit < DEFAULT_LIMIT {
+        limit = DEFAULT_LIMIT;
+    } else if limit > MAX_LIMIT {
+        limit = MAX_LIMIT;
+    };
 
-    let start = (page*MAX_LIMIT) as usize;
-    let end = ((page+1)*MAX_LIMIT) as usize;
+    let start = (page*limit) as usize;
+    let end = ((page+1)*limit) as usize;
 
     Ok(results[start..end].to_vec())
 }
@@ -208,10 +220,12 @@ fn query_swaps_by_price(
     max: Option<Uint128>, 
     swap_type: Option<SwapType>,
     page: Option<u32>,
+    limit: Option<u32>,
 ) -> StdResult<Vec<CW721Swap>> {
     let min: Uint128 = min.unwrap_or(Uint128::from(0_u32));
     let side: SwapType = swap_type.unwrap_or(SwapType::Sale);
     let page: u32 = page.unwrap_or(0_u32);
+    let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
         .range(deps.storage, None, None, Order::Ascending)
@@ -243,8 +257,14 @@ fn query_swaps_by_price(
             .collect()
     };
 
-    let start = (page*MAX_LIMIT) as usize;
-    let end = ((page+1)*MAX_LIMIT) as usize;
+    if limit < DEFAULT_LIMIT {
+        limit = DEFAULT_LIMIT;
+    } else if limit > MAX_LIMIT {
+        limit = MAX_LIMIT;
+    };
+
+    let start = (page*limit) as usize;
+    let end = ((page+1)*limit) as usize;
 
     Ok(results[start..end].to_vec())
 }
@@ -254,9 +274,11 @@ fn query_swaps_by_denom(
     payment_token: Option<Addr>, 
     swap_type: Option<SwapType>,
     page: Option<u32>,
+    limit: Option<u32>,
 ) -> StdResult<Vec<CW721Swap>> {
     let side: SwapType = swap_type.unwrap_or(SwapType::Sale);
     let page: u32 = page.unwrap_or(0_u32);
+    let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
         .range(deps.storage, None, None, Order::Ascending)
@@ -288,8 +310,14 @@ fn query_swaps_by_denom(
             .collect()
     };
 
-    let start = (page*MAX_LIMIT) as usize;
-    let end = ((page+1)*MAX_LIMIT) as usize;
+    if limit < DEFAULT_LIMIT {
+        limit = DEFAULT_LIMIT;
+    } else if limit > MAX_LIMIT {
+        limit = MAX_LIMIT;
+    };
+
+    let start = (page*limit) as usize;
+    let end = ((page+1)*limit) as usize;
 
     Ok(results[start..end].to_vec())
 }
@@ -299,9 +327,11 @@ fn query_swaps_by_payment_type(
     cw20: bool,
     swap_type: Option<SwapType>,
     page: Option<u32>,
+    limit: Option<u32>,
 ) -> StdResult<Vec<CW721Swap>> {
     let side: SwapType = swap_type.unwrap_or(SwapType::Sale);
     let page: u32 = page.unwrap_or(0_u32);
+    let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
         .range(deps.storage, None, None, Order::Ascending)
@@ -333,8 +363,14 @@ fn query_swaps_by_payment_type(
             .collect()
     };
 
-    let start = (page*MAX_LIMIT) as usize;
-    let end = ((page+1)*MAX_LIMIT) as usize;
+    if limit < DEFAULT_LIMIT {
+        limit = DEFAULT_LIMIT;
+    } else if limit > MAX_LIMIT {
+        limit = MAX_LIMIT;
+    };
+
+    let start = (page*limit) as usize;
+    let end = ((page+1)*limit) as usize;
 
     Ok(results[start..end].to_vec())
 }
