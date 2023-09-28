@@ -68,11 +68,11 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::List { start_after, limit } => to_binary(&query_list(deps, start_after, limit)?),
         QueryMsg::Details { id } => to_binary(&query_details(deps, id)?),
-        QueryMsg::GetOffers { token_id, page, limit } => {
-            to_binary(&query_swaps(deps, token_id, SwapType::Offer, page, limit)?)
+        QueryMsg::GetOffers { page, limit } => {
+            to_binary(&query_swaps(deps, SwapType::Offer, page, limit)?)
         },
-        QueryMsg::GetListings { token_id, page, limit } => {
-            to_binary(&query_swaps(deps, token_id, SwapType::Sale, page, limit)?)
+        QueryMsg::GetListings { page, limit } => {
+            to_binary(&query_swaps(deps, SwapType::Sale, page, limit)?)
         }
         QueryMsg::GetTotal { swap_type } => {
             to_binary(&query_swap_total(deps, swap_type)?)
@@ -147,7 +147,7 @@ fn query_list(
 }
 
 fn query_swaps(
-    deps: Deps, id: String, 
+    deps: Deps,
     side: SwapType, 
     page: Option<u32>, 
     limit: Option<u32>,
@@ -165,7 +165,6 @@ fn query_swaps(
         .map(|t| t.1)
         .filter(|item| {
             item.nft_contract == config.cw721 
-            && item.token_id == id 
             && item.swap_type == side
         })
         .collect();

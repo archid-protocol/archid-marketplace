@@ -49,13 +49,11 @@ pub enum QueryMsg {
     },
     /// Get all swaps of type `SwapType::Offer`
     GetOffers {
-        token_id: String,
         page: Option<u32>,
         limit: Option<u32>,
     },
     /// Get all swaps of type `SwapType::Sale`
     GetListings {
-        token_id: String,
         page: Option<u32>,
         limit: Option<u32>,
     },

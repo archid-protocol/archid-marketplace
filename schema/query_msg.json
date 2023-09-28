@@ -60,9 +60,6 @@
       "properties": {
         "get_offers": {
           "type": "object",
-          "required": [
-            "token_id"
-          ],
           "properties": {
             "limit": {
               "type": [
@@ -79,9 +76,6 @@
               ],
               "format": "uint32",
               "minimum": 0.0
-            },
-            "token_id": {
-              "type": "string"
             }
           }
         }
@@ -97,9 +91,6 @@
       "properties": {
         "get_listings": {
           "type": "object",
-          "required": [
-            "token_id"
-          ],
           "properties": {
             "limit": {
               "type": [
@@ -116,9 +107,6 @@
               ],
               "format": "uint32",
               "minimum": 0.0
-            },
-            "token_id": {
-              "type": "string"
             }
           }
         }
