@@ -859,7 +859,7 @@ fn test_pagination() {
         }
     ).unwrap();
     
-    // Paginated results must not have any duplicates
+    // Paginated results must not have duplicates
     let mut all_res = page_1.swaps.clone();
     all_res.append(&mut page_2.swaps.clone());
     all_res.append(&mut page_3.swaps.clone());
@@ -870,14 +870,14 @@ fn test_pagination() {
     assert_eq!(page_2.swaps.len(), 5);
     assert_eq!(page_3.swaps.len(), 5);
 
-    // Query GetListings entry point for 3 pages
+    // Query GetListings entry point for 2 pages
     // Page 1
     let page_1b: Vec<CW721Swap> = query(
         &mut app,
         swap_inst.clone(),
         QueryMsg::GetListings {
             page: None,
-            limit: Some(limit.clone()),
+            limit: None,
         }
     ).unwrap();
     // Page 2
@@ -886,7 +886,7 @@ fn test_pagination() {
         swap_inst.clone(),
         QueryMsg::GetListings {
             page: Some(1_u32),
-            limit: Some(limit.clone()),
+            limit: None,
         }
     ).unwrap();
 
@@ -894,7 +894,7 @@ fn test_pagination() {
     assert_eq!(page_1b.len(), 10);
     assert_eq!(page_2b.len(), 5);
 
-    // Paginated results must not have any duplicates
+    // Paginated results must not have duplicates
     let mut all_res_b = page_1b.clone();
     all_res_b.append(&mut page_2b.clone());
     let mut token_ids_b: Vec<String> = vec![];
@@ -902,4 +902,155 @@ fn test_pagination() {
         token_ids_b.push(swap.clone().token_id);
     }
     assert!(has_unique_elements(token_ids_b));
+
+    // Query SwapsOf entry point for 2 pages
+    // Page 1
+    let page_1c: Vec<CW721Swap> = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::SwapsOf {
+            address: cw721_owner.clone(),
+            swap_type: Some(SwapType::Sale),
+            page: None,
+            limit: None,
+        }
+    ).unwrap();
+    // Page 2
+    let page_2c: Vec<CW721Swap> = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::SwapsOf {
+            address: cw721_owner.clone(),
+            swap_type: Some(SwapType::Sale),
+            page: Some(1_u32),
+            limit: None,
+        }
+    ).unwrap();
+
+    // Paginated results must have correct page sizes
+    assert_eq!(page_1c.len(), 10);
+    assert_eq!(page_2c.len(), 5);
+
+    // Paginated results must not have duplicates
+    let mut all_res_c = page_1c.clone();
+    all_res_c.append(&mut page_2c.clone());
+    let mut token_ids_c: Vec<String> = vec![];
+    for swap in all_res_c.iter() {
+        token_ids_c.push(swap.clone().token_id);
+    }
+    assert!(has_unique_elements(token_ids_c));
+
+    // Query SwapsByPrice entry point for 2 pages
+    // Page 1
+    let page_1d: Vec<CW721Swap> = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::SwapsByPrice {
+            min: Some(Uint128::from(0_u128)),
+            max: Some(Uint128::from(1000000000000000000_u128)),
+            swap_type: Some(SwapType::Sale),
+            page: None,
+            limit: None,
+        }
+    ).unwrap();
+    // Page 2
+    let page_2d: Vec<CW721Swap> = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::SwapsByPrice {
+            min: Some(Uint128::from(0_u128)),
+            max: Some(Uint128::from(1000000000000000000_u128)),
+            swap_type: Some(SwapType::Sale),
+            page: Some(1_u32),
+            limit: None,
+        }
+    ).unwrap();
+
+    // Paginated results must have correct page sizes
+    assert_eq!(page_1d.len(), 10);
+    assert_eq!(page_2d.len(), 5);
+
+    // Paginated results must not have duplicates
+    let mut all_res_d = page_1d.clone();
+    all_res_d.append(&mut page_2d.clone());
+    let mut token_ids_d: Vec<String> = vec![];
+    for swap in all_res_d.iter() {
+        token_ids_d.push(swap.clone().token_id);
+    }
+    assert!(has_unique_elements(token_ids_d));
+
+    // Query SwapsByDenom entry point for 2 pages
+    // Page 1
+    let page_1e: Vec<CW721Swap> = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::SwapsByDenom {
+            payment_token: None,
+            swap_type: Some(SwapType::Sale),
+            page: None,
+            limit: None,
+        }
+    ).unwrap();
+    // Page 2
+    let page_2e: Vec<CW721Swap> = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::SwapsByDenom {
+            payment_token: None,
+            swap_type: Some(SwapType::Sale),
+            page: Some(1_u32),
+            limit: None,
+        }
+    ).unwrap();
+
+    // Paginated results must have correct page sizes
+    assert_eq!(page_1e.len(), 10);
+    assert_eq!(page_2e.len(), 5);
+
+    // Paginated results must not have duplicates
+    let mut all_res_e = page_1e.clone();
+    all_res_e.append(&mut page_2e.clone());
+    let mut token_ids_e: Vec<String> = vec![];
+    for swap in all_res_e.iter() {
+        token_ids_e.push(swap.clone().token_id);
+    }
+    assert!(has_unique_elements(token_ids_e));
+
+
+    // Query SwapsByPaymentType entry point for 2 pages
+    // Page 1
+    let page_1f: Vec<CW721Swap> = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::SwapsByPaymentType {
+            cw20: false,
+            swap_type: Some(SwapType::Sale),
+            page: None,
+            limit: None,
+        }
+    ).unwrap();
+    // Page 2
+    let page_2f: Vec<CW721Swap> = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::SwapsByPaymentType {
+            cw20: false,
+            swap_type: Some(SwapType::Sale),
+            page: Some(1_u32),
+            limit: None,
+        }
+    ).unwrap();
+
+    // Paginated results must have correct page sizes
+    assert_eq!(page_1f.len(), 10);
+    assert_eq!(page_2f.len(), 5);
+
+    // Paginated results must not have duplicates
+    let mut all_res_f = page_1f.clone();
+    all_res_f.append(&mut page_2f.clone());
+    let mut token_ids_f: Vec<String> = vec![];
+    for swap in all_res_f.iter() {
+        token_ids_f.push(swap.clone().token_id);
+    }
+    assert!(has_unique_elements(token_ids_f));
 }
