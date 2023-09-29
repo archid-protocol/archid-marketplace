@@ -1053,4 +1053,47 @@ fn test_pagination() {
         token_ids_f.push(swap.clone().token_id);
     }
     assert!(has_unique_elements(token_ids_f));
+
+    // Query ListingsOfToken entry point (All Listings)
+    let listings_of_token_a: Vec<CW721Swap> = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::ListingsOfToken {
+            token_id: "token10".to_string(),
+            swap_type: None, // All Listings
+            page: None,
+            limit: None,
+        }
+    ).unwrap();
+    // 1 Result
+    assert_eq!(listings_of_token_a.len(), 1);
+
+    // Query ListingsOfToken entry point (Sales)
+    let listings_of_token_b: Vec<CW721Swap> = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::ListingsOfToken {
+            token_id: "token10".to_string(),
+            swap_type: Some(SwapType::Sale), // Sale Listings
+            page: None,
+            limit: None,
+        }
+    ).unwrap();
+    // 1 Result
+    assert_eq!(listings_of_token_b.len(), 1);
+
+    // Query ListingsOfToken entry point (Offers)
+    let listings_of_token_c: Vec<CW721Swap> = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::ListingsOfToken {
+            token_id: "token10".to_string(),
+            swap_type: Some(SwapType::Offer), // Offer Listings
+            page: None,
+            limit: None,
+        }
+    ).unwrap();
+    // 0 Results
+    dbg!(listings_of_token_c.clone());
+    assert_eq!(listings_of_token_c.len(), 0);
 }

@@ -57,6 +57,14 @@ pub enum QueryMsg {
         page: Option<u32>,
         limit: Option<u32>,
     },
+    /// Get all listings for a token of type `Swap::Sale` and `Swap::Offer` 
+    /// or both (`None`)
+    ListingsOfToken {
+        token_id: String,
+        swap_type: Option<SwapType>,
+        page: Option<u32>,
+        limit: Option<u32>,
+    },
     /// Show all swaps created by a specific address
     /// Defaults to SwapType::Sale if no `swap_type`
     SwapsOf { 

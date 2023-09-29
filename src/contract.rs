@@ -68,14 +68,15 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::List { start_after, limit } => to_binary(&query_list(deps, start_after, limit)?),
         QueryMsg::Details { id } => to_binary(&query_details(deps, id)?),
+        QueryMsg::GetTotal { swap_type } => to_binary(&query_swap_total(deps, swap_type)?),
         QueryMsg::GetOffers { page, limit } => {
             to_binary(&query_swaps(deps, SwapType::Offer, page, limit)?)
         },
         QueryMsg::GetListings { page, limit } => {
             to_binary(&query_swaps(deps, SwapType::Sale, page, limit)?)
         }
-        QueryMsg::GetTotal { swap_type } => {
-            to_binary(&query_swap_total(deps, swap_type)?)
+        QueryMsg::ListingsOfToken { token_id, swap_type, page, limit } => {
+            to_binary(&query_swaps_of_token(deps, token_id, swap_type, page, limit)?)
         }
         QueryMsg::SwapsOf { address, swap_type, page, limit } => {
             to_binary(&query_swaps_by_creator(deps, address, swap_type, page, limit)?)
@@ -196,7 +197,69 @@ fn query_swaps(
     } else if limit > MAX_LIMIT {
         limit = MAX_LIMIT;
     }
-    let modulo = total_results % limit;
+    let modulo = if total_results > 0 { total_results % limit } else { 0 };
+    let page_size: u32 = if page > 0 { 
+        match modulo {
+            0 => limit,
+            _ => modulo,
+        }
+    } else { 
+        limit 
+    };
+
+    let start = (page * limit) as usize;
+    let end = (start as u32 + page_size) as usize;
+
+    Ok(results[start..end].to_vec())
+}
+
+fn query_swaps_of_token(
+    deps: Deps,
+    token_id: String,
+    side: Option<SwapType>, 
+    page: Option<u32>, 
+    limit: Option<u32>,
+) -> StdResult<Vec<CW721Swap>> {
+    let page: u32 = page.unwrap_or(0_u32);
+    let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
+    let config = CONFIG.load(deps.storage)?;
+    let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
+        .range(deps.storage, None, None, Order::Ascending)
+        .collect();
+
+    let results: Vec<CW721Swap> = if let Some(swap_type) = side {
+        swaps
+            .unwrap()
+            .into_iter()
+            .map(|t| t.1)
+            .filter(|item| {
+                item.nft_contract == config.cw721 
+                && item.token_id == token_id
+                && item.swap_type == swap_type
+            })
+            .collect()
+    } else {
+        swaps
+            .unwrap()
+            .into_iter()
+            .map(|t| t.1)
+            .filter(|item| {
+                item.nft_contract == config.cw721 
+                && item.token_id == token_id
+            })
+            .collect()
+    };
+
+    // Dynamic limit and last page size
+    let total_results = results.len() as u32;
+    if total_results < limit {
+        limit = total_results;
+    } else if limit < DEFAULT_LIMIT {
+        limit = DEFAULT_LIMIT;
+    } else if limit > MAX_LIMIT {
+        limit = MAX_LIMIT;
+    }
+    let modulo = if total_results > 0 { total_results % limit } else { 0 };
     let page_size: u32 = if page > 0 { 
         match modulo {
             0 => limit,
@@ -247,7 +310,7 @@ fn query_swaps_by_creator(
     } else if limit > MAX_LIMIT {
         limit = MAX_LIMIT;
     }
-    let modulo = total_results % limit;
+    let modulo = if total_results > 0 { total_results % limit } else { 0 };
     let page_size: u32 = if page > 0 { 
         match modulo {
             0 => limit,
@@ -315,7 +378,7 @@ fn query_swaps_by_price(
     } else if limit > MAX_LIMIT {
         limit = MAX_LIMIT;
     }
-    let modulo = total_results % limit;
+    let modulo = if total_results > 0 { total_results % limit } else { 0 };
     let page_size: u32 = if page > 0 { 
         match modulo {
             0 => limit,
@@ -381,7 +444,7 @@ fn query_swaps_by_denom(
     } else if limit > MAX_LIMIT {
         limit = MAX_LIMIT;
     }
-    let modulo = total_results % limit;
+    let modulo = if total_results > 0 { total_results % limit } else { 0 };
     let page_size: u32 = if page > 0 { 
         match modulo {
             0 => limit,
@@ -447,7 +510,7 @@ fn query_swaps_by_payment_type(
     } else if limit > MAX_LIMIT {
         limit = MAX_LIMIT;
     }
-    let modulo = total_results % limit;
+    let modulo = if total_results > 0 { total_results % limit } else { 0 };
     let page_size: u32 = if page > 0 { 
         match modulo {
             0 => limit,
