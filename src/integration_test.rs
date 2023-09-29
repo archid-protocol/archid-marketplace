@@ -21,7 +21,7 @@ use cw721::OwnerOfResponse;
 use crate::msg::{
     ExecuteMsg, ListResponse, QueryMsg, SwapMsg, InstantiateMsg
 };
-use crate::state::SwapType;
+use crate::state::{CW721Swap, SwapType};
 use crate::contract::DENOM;
 
 fn mock_app() -> App {
@@ -761,7 +761,7 @@ fn test_overpayment_native() {
 
 // Listing swaps should be enumerable
 #[test]
-fn test_list_pagination() {
+fn test_pagination() {
     let mut app = mock_app();
     
     // Swap owner deploys
@@ -869,4 +869,37 @@ fn test_list_pagination() {
     assert_eq!(page_1.swaps.len(), 5);
     assert_eq!(page_2.swaps.len(), 5);
     assert_eq!(page_3.swaps.len(), 5);
+
+    // Query GetListings entry point for 3 pages
+    // Page 1
+    let page_1b: Vec<CW721Swap> = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::GetListings {
+            page: None,
+            limit: Some(limit.clone()),
+        }
+    ).unwrap();
+    // Page 2
+    let page_2b: Vec<CW721Swap> = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::GetListings {
+            page: Some(1_u32),
+            limit: Some(limit.clone()),
+        }
+    ).unwrap();
+
+    // Paginated results must have correct page sizes
+    assert_eq!(page_1b.len(), 10);
+    assert_eq!(page_2b.len(), 5);
+
+    // Paginated results must not have any duplicates
+    let mut all_res_b = page_1b.clone();
+    all_res_b.append(&mut page_2b.clone());
+    let mut token_ids_b: Vec<String> = vec![];
+    for swap in all_res_b.iter() {
+        token_ids_b.push(swap.clone().token_id);
+    }
+    assert!(has_unique_elements(token_ids_b));
 }

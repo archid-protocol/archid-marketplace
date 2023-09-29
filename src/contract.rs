@@ -206,8 +206,8 @@ fn query_swaps(
         limit 
     };
 
-    let start = (page * page_size) as usize;
-    let end = ((page + 1) * page_size) as usize;
+    let start = (page * limit) as usize;
+    let end = (start as u32 + page_size) as usize;
 
     Ok(results[start..end].to_vec())
 }
@@ -257,8 +257,8 @@ fn query_swaps_by_creator(
         limit 
     };
 
-    let start = (page * page_size) as usize;
-    let end = ((page + 1) * page_size) as usize;
+    let start = (page * limit) as usize;
+    let end = (start as u32 + page_size) as usize;
 
     Ok(results[start..end].to_vec())
 }
@@ -325,8 +325,8 @@ fn query_swaps_by_price(
         limit 
     };
 
-    let start = (page * page_size) as usize;
-    let end = ((page + 1) * page_size) as usize;
+    let start = (page * limit) as usize;
+    let end = (start as u32 + page_size) as usize;
 
     Ok(results[start..end].to_vec())
 }
@@ -391,8 +391,8 @@ fn query_swaps_by_denom(
         limit 
     };
 
-    let start = (page * page_size) as usize;
-    let end = ((page + 1) * page_size) as usize;
+    let start = (page * limit) as usize;
+    let end = (start as u32 + page_size) as usize;
 
     Ok(results[start..end].to_vec())
 }
@@ -457,8 +457,8 @@ fn query_swaps_by_payment_type(
         limit 
     };
 
-    let start = (page * page_size) as usize;
-    let end = ((page + 1) * page_size) as usize;
+    let start = (page * limit) as usize;
+    let end = (start as u32 + page_size) as usize;
 
     Ok(results[start..end].to_vec())
 }
