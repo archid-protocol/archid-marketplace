@@ -146,6 +146,24 @@ fn query_list(
     })
 }
 
+fn query_swap_total(deps: Deps, side: SwapType) -> StdResult<u128> {
+    let config = CONFIG.load(deps.storage)?;
+    let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
+        .range(deps.storage, None, None, Order::Ascending)
+        .collect();
+
+    let results: Vec<CW721Swap> = swaps
+        .unwrap()
+        .into_iter()
+        .map(|t| t.1)
+        .filter(|item| {
+            item.nft_contract == config.cw721 && item.swap_type == side
+        })
+        .collect();
+    
+    Ok(results.len() as u128)
+}
+
 fn query_swaps(
     deps: Deps,
     side: SwapType, 
@@ -168,7 +186,8 @@ fn query_swaps(
             && item.swap_type == side
         })
         .collect();
-    
+
+    // Dynamic limit and last page size
     let total_results = results.len() as u32;
     if total_results < limit {
         limit = total_results;
@@ -177,29 +196,20 @@ fn query_swaps(
     } else if limit > MAX_LIMIT {
         limit = MAX_LIMIT;
     }
+    let modulo = total_results % limit;
+    let page_size: u32 = if page > 0 { 
+        match modulo {
+            0 => limit,
+            _ => modulo,
+        }
+    } else { 
+        limit 
+    };
 
-    let start = (page*limit) as usize;
-    let end = ((page+1)*limit) as usize;
+    let start = (page * page_size) as usize;
+    let end = ((page + 1) * page_size) as usize;
 
     Ok(results[start..end].to_vec())
-}
-
-fn query_swap_total(deps: Deps, side: SwapType) -> StdResult<u128> {
-    let config = CONFIG.load(deps.storage)?;
-    let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
-        .range(deps.storage, None, None, Order::Ascending)
-        .collect();
-
-    let results: Vec<CW721Swap> = swaps
-        .unwrap()
-        .into_iter()
-        .map(|t| t.1)
-        .filter(|item| {
-            item.nft_contract == config.cw721 && item.swap_type == side
-        })
-        .collect();
-    
-    Ok(results.len() as u128)
 }
 
 fn query_swaps_by_creator(
@@ -228,6 +238,7 @@ fn query_swaps_by_creator(
         })
         .collect();
 
+    // Dynamic limit and last page size
     let total_results = results.len() as u32;
     if total_results < limit {
         limit = total_results;
@@ -236,9 +247,18 @@ fn query_swaps_by_creator(
     } else if limit > MAX_LIMIT {
         limit = MAX_LIMIT;
     }
+    let modulo = total_results % limit;
+    let page_size: u32 = if page > 0 { 
+        match modulo {
+            0 => limit,
+            _ => modulo,
+        }
+    } else { 
+        limit 
+    };
 
-    let start = (page*limit) as usize;
-    let end = ((page+1)*limit) as usize;
+    let start = (page * page_size) as usize;
+    let end = ((page + 1) * page_size) as usize;
 
     Ok(results[start..end].to_vec())
 }
@@ -286,6 +306,7 @@ fn query_swaps_by_price(
             .collect()
     };
 
+    // Dynamic limit and last page size
     let total_results = results.len() as u32;
     if total_results < limit {
         limit = total_results;
@@ -294,9 +315,18 @@ fn query_swaps_by_price(
     } else if limit > MAX_LIMIT {
         limit = MAX_LIMIT;
     }
+    let modulo = total_results % limit;
+    let page_size: u32 = if page > 0 { 
+        match modulo {
+            0 => limit,
+            _ => modulo,
+        }
+    } else { 
+        limit 
+    };
 
-    let start = (page*limit) as usize;
-    let end = ((page+1)*limit) as usize;
+    let start = (page * page_size) as usize;
+    let end = ((page + 1) * page_size) as usize;
 
     Ok(results[start..end].to_vec())
 }
@@ -342,6 +372,7 @@ fn query_swaps_by_denom(
             .collect()
     };
 
+    // Dynamic limit and last page size
     let total_results = results.len() as u32;
     if total_results < limit {
         limit = total_results;
@@ -350,9 +381,18 @@ fn query_swaps_by_denom(
     } else if limit > MAX_LIMIT {
         limit = MAX_LIMIT;
     }
+    let modulo = total_results % limit;
+    let page_size: u32 = if page > 0 { 
+        match modulo {
+            0 => limit,
+            _ => modulo,
+        }
+    } else { 
+        limit 
+    };
 
-    let start = (page*limit) as usize;
-    let end = ((page+1)*limit) as usize;
+    let start = (page * page_size) as usize;
+    let end = ((page + 1) * page_size) as usize;
 
     Ok(results[start..end].to_vec())
 }
@@ -398,6 +438,7 @@ fn query_swaps_by_payment_type(
             .collect()
     };
 
+    // Dynamic limit and last page size
     let total_results = results.len() as u32;
     if total_results < limit {
         limit = total_results;
@@ -406,9 +447,18 @@ fn query_swaps_by_payment_type(
     } else if limit > MAX_LIMIT {
         limit = MAX_LIMIT;
     }
+    let modulo = total_results % limit;
+    let page_size: u32 = if page > 0 { 
+        match modulo {
+            0 => limit,
+            _ => modulo,
+        }
+    } else { 
+        limit 
+    };
 
-    let start = (page*limit) as usize;
-    let end = ((page+1)*limit) as usize;
+    let start = (page * page_size) as usize;
+    let end = ((page + 1) * page_size) as usize;
 
     Ok(results[start..end].to_vec())
 }
