@@ -537,7 +537,7 @@ pub fn execute_create(
     }
 
     let config = CONFIG.load(deps.storage)?;
-    if msg.swap_type==SwapType::Sale {
+    if msg.swap_type == SwapType::Sale {
         let owner = query_name_owner(&msg.token_id, &config.cw721, &deps).unwrap();
         if owner.owner != info.sender {
             return Err(ContractError::Unauthorized);
