@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{BankMsg, Coin, CosmosMsg, DepsMut, Env, MessageInfo, Response};
 
 use crate::state::{CW721Swap, Config, CONFIG, SWAPS, SwapType};
 use crate::utils::{
@@ -126,7 +126,6 @@ pub fn execute_finish(
     let transfer_results = match msg.swap_type {
         SwapType::Offer => handle_swap_transfers(&info.sender, &swap.creator, swap.clone(), &info.funds)?,
         SwapType::Sale => handle_swap_transfers(&swap.creator, &info.sender, swap.clone(), &info.funds)?,
-        
     };
 
     SWAPS.remove(deps.storage, &msg.id);
@@ -146,7 +145,7 @@ pub fn execute_finish(
 
 pub fn execute_cancel(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: CancelMsg,
 ) -> Result<Response, ContractError> {
@@ -154,11 +153,36 @@ pub fn execute_cancel(
     if info.sender != swap.creator {
         return Err(ContractError::Unauthorized {});
     }
+    
+    // Return escrowed funds if SwapType::Offer
+    // and payment_token is ARCH (e.g. not cw20)
+    let escrow = if swap.swap_type == SwapType::Offer && swap.payment_token.is_none() {
+        // Check contract has adequate balance 
+        // (funded at Swap creation)
+        let escrowed_payment = Coin {
+            denom: DENOM.to_string(),
+            amount: swap.price,
+        };
+        check_contract_balance_ok(env, &deps, escrowed_payment.clone())?;
+
+        let release_escrow_msg = BankMsg::Send {
+            to_address: info.sender.to_string(),
+            amount: ([escrowed_payment]).to_vec(),
+        };
+
+        let released_escrow: CosmosMsg = cosmwasm_std::CosmosMsg::Bank(release_escrow_msg);
+        Some(released_escrow)
+    } else {
+        None
+    };
+
     SWAPS.remove(deps.storage, &msg.id);
 
     Ok(Response::new()
         .add_attribute("action", "cancel")
-        .add_attribute("swap_id", msg.id))
+        .add_attribute("swap_id", msg.id)
+        .add_messages(escrow)
+    )
 }
 
 pub fn execute_update_config(
