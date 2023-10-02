@@ -545,14 +545,12 @@ pub fn execute_create(//here
             return Err(ContractError::Unauthorized);
         }
     // SwapType::Offer
-    } else {
-        if !has_payment_token {
-            let required_payment = Coin {
-                denom: DENOM.to_string(),
-                amount: msg.price,
-            };
-            check_sent_required_payment(&info.funds, Some(required_payment))?;
-        }
+    } else if msg.swap_type == SwapType::Offer && !has_payment_token {
+        let required_payment = Coin {
+            denom: DENOM.to_string(),
+            amount: msg.price,
+        };
+        check_sent_required_payment(&info.funds, Some(required_payment))?;
     }
     let swap = CW721Swap {
         creator: info.sender,

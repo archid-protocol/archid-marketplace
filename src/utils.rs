@@ -52,7 +52,8 @@ pub fn check_contract_balance_ok(
     deps: &DepsMut,
     required: Coin,
 ) -> Result<(), ContractError> {
-    if required.denom != DENOM.to_string() {
+    let required_denom: String = DENOM.to_string();
+    if required.denom != required_denom {
         return Err(ContractError::InsufficientBalance {});
     }
     let swap_instance: &Addr = &env.contract.address;
@@ -61,7 +62,7 @@ pub fn check_contract_balance_ok(
     // Balance query
     let req: QueryRequest<BankQuery> = QueryRequest::Bank(BankQuery::Balance { 
         address: swap_instance.to_string(),
-        denom: DENOM.to_string(),
+        denom: required_denom,
     });
     let res = deps.querier.raw_query(&to_binary(&req).unwrap()).unwrap().unwrap();
     let query: BalanceResponse = from_binary(&res).unwrap();
