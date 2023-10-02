@@ -1094,6 +1094,5 @@ fn test_pagination() {
         }
     ).unwrap();
     // 0 Results
-    dbg!(listings_of_token_c.clone());
     assert_eq!(listings_of_token_c.len(), 0);
 }
