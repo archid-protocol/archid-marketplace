@@ -114,6 +114,53 @@
       "additionalProperties": false
     },
     {
+      "description": "Get all listings for a token of type `Swap::Sale` and `Swap::Offer` or both (`None`)",
+      "type": "object",
+      "required": [
+        "listings_of_token"
+      ],
+      "properties": {
+        "listings_of_token": {
+          "type": "object",
+          "required": [
+            "token_id"
+          ],
+          "properties": {
+            "limit": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "page": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "swap_type": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/SwapType"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "token_id": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
       "description": "Show all swaps created by a specific address Defaults to SwapType::Sale if no `swap_type`",
       "type": "object",
       "required": [
