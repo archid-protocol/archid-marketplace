@@ -1,12 +1,12 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{
-    entry_point, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut,Order, Env,
-    MessageInfo, Reply, Response, StdResult, SubMsgResult, Uint128, WasmMsg,
+    Addr, to_binary, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, entry_point, Env, MessageInfo, 
+    Order, Reply, Response, StdResult, SubMsgResult, Uint128, WasmMsg,
 };
 use cw_storage_plus::Bound;
 
 use crate::error::ContractError;
-use crate::utils::query_name_owner;
+use crate::utils::{check_sent_required_payment, check_contract_balance_ok, query_name_owner,};
 use cw20::Cw20ExecuteMsg;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, Extension};
 
@@ -526,7 +526,7 @@ fn query_swaps_by_payment_type(
     Ok(results[start..end].to_vec())
 }
 
-pub fn execute_create(
+pub fn execute_create(//here
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -537,10 +537,21 @@ pub fn execute_create(
     }
 
     let config = CONFIG.load(deps.storage)?;
+    let has_payment_token = msg.payment_token.is_some();
+    // SwapType::Sale
     if msg.swap_type == SwapType::Sale {
         let owner = query_name_owner(&msg.token_id, &config.cw721, &deps).unwrap();
         if owner.owner != info.sender {
             return Err(ContractError::Unauthorized);
+        }
+    // SwapType::Offer
+    } else {
+        if !has_payment_token {
+            let required_payment = Coin {
+                denom: DENOM.to_string(),
+                amount: msg.price,
+            };
+            check_sent_required_payment(&info.funds, Some(required_payment))?;
         }
     }
     let swap = CW721Swap {
@@ -559,7 +570,7 @@ pub fn execute_create(
         Some(_) => Err(ContractError::AlreadyExists {}),
     })?;
 
-    let payment_token: String = if swap.payment_token.is_some() {
+    let payment_token: String = if has_payment_token {
         swap.payment_token.unwrap().to_string()
     } else {
         DENOM.to_string()
@@ -601,7 +612,7 @@ pub fn execute_update(
 
 }
 
-pub fn execute_finish(
+pub fn execute_finish(//here
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -620,14 +631,17 @@ pub fn execute_finish(
             denom: DENOM.to_string(),
             amount: swap.price,
         };
-        check_sent_required_payment(&info.funds, Some(required_payment))?;
-
-        // Native aarch offers not allowed
-        if swap.swap_type==SwapType::Offer {
-            return Err(ContractError::InvalidInput {});
+        // Native aarch offer
+        if swap.swap_type == SwapType::Offer {
+            // Check contract has adequate balance 
+            // (funded at Swap creation)
+            check_contract_balance_ok(env, &deps, required_payment)?;
+        // Native aarch sale
+        } else {
+            // Check buyer sent correct payment
+            check_sent_required_payment(&info.funds, Some(required_payment))?;
         }
     }
-
   
     let transfer_results = match msg.swap_type {
         SwapType::Offer => handle_swap_transfers(&info.sender, &swap.creator, swap.clone(), &info.funds)?,
@@ -684,7 +698,7 @@ pub fn execute_update_config(
     Ok(Response::new().add_attribute("action", "update_config"))
 }
 
-fn handle_swap_transfers(
+fn handle_swap_transfers(//here
     nft_sender: &Addr,
     nft_receiver: &Addr,
     details: CW721Swap,
@@ -707,9 +721,16 @@ fn handle_swap_transfers(
         cw20_callback
     // aarch swap
     } else {
+        let payment_funds = if details.swap_type == SwapType::Sale { funds.to_vec() } else { 
+            ([Coin {
+                denom: String::from(DENOM),
+                amount: details.price,
+            }])
+            .to_vec()
+        };
         let aarch_transfer_msg = BankMsg::Send {
             to_address: nft_sender.to_string(),
-            amount: funds.to_vec(),
+            amount: payment_funds,
         };
 
         let aarch_callback: CosmosMsg = cosmwasm_std::CosmosMsg::Bank(aarch_transfer_msg);
@@ -729,29 +750,6 @@ fn handle_swap_transfers(
     .into();
 
     Ok(vec![cw721_callback, payment_callback])
-}
-
-pub fn check_sent_required_payment(
-    sent: &[Coin],
-    required: Option<Coin>,
-) -> Result<(), ContractError> {
-    if let Some(required_coin) = required {
-        let required_amount = required_coin.amount.u128();
-        if required_amount > 0 {
-            let sent_sufficient_funds = sent.iter().any(|coin| {
-                // check if a given sent coin matches denom
-                // and has sufficient amount
-                coin.denom == required_coin.denom && coin.amount.u128() >= required_amount
-            });
-
-            if sent_sufficient_funds {
-                return Ok(());
-            } else {
-                return Err(ContractError::Unauthorized {});
-            }
-        }
-    }
-    Ok(())
 }
 
 #[cfg(test)]

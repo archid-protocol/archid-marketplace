@@ -25,6 +25,8 @@ pub enum ContractError {
     #[error("Invalid input")]
     InvalidInput {},
 
+    #[error("Insufficient contract balance")]
+    InsufficientBalance {},
  
     #[error("Unauthorized")]
     Unauthorized,
