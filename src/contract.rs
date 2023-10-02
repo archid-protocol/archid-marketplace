@@ -526,7 +526,7 @@ fn query_swaps_by_payment_type(
     Ok(results[start..end].to_vec())
 }
 
-pub fn execute_create(//here
+pub fn execute_create(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -610,7 +610,7 @@ pub fn execute_update(
 
 }
 
-pub fn execute_finish(//here
+pub fn execute_finish(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -696,7 +696,7 @@ pub fn execute_update_config(
     Ok(Response::new().add_attribute("action", "update_config"))
 }
 
-fn handle_swap_transfers(//here
+fn handle_swap_transfers(
     nft_sender: &Addr,
     nft_receiver: &Addr,
     details: CW721Swap,
