@@ -609,7 +609,7 @@ fn test_invalid_payment_native() {
         token_id: token_id.clone(),    
         expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),
         price: Uint128::from(5000000000000000000_u128), // 5 ARCH as aarch
-        swap_type:SwapType::Offer,
+        swap_type: SwapType::Sale,
     };
     let finish_msg = creation_msg.clone();
 
