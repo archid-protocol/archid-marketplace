@@ -65,9 +65,15 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::List { start_after, limit } => to_binary(&query_list(deps, start_after, limit)?),
-        QueryMsg::Details { id } => to_binary(&query_details(deps, id)?),
-        QueryMsg::GetTotal { swap_type } => to_binary(&query_swap_total(deps, swap_type)?),
+        QueryMsg::List { start_after, limit } => {
+            to_binary(&query_list(deps, start_after, limit)?)
+        },
+        QueryMsg::Details { id } => {
+            to_binary(&query_details(deps, id)?)
+        },
+        QueryMsg::GetTotal { swap_type } => {
+            to_binary(&query_swap_total(deps, swap_type)?)
+        },
         QueryMsg::GetOffers { page, limit } => {
             to_binary(&query_swaps(deps, SwapType::Offer, page, limit)?)
         },
