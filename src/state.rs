@@ -22,7 +22,7 @@ pub enum SwapType{
 }
 // swap type of false equals offer, swap type of true equals buy
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct CW721Swap {    
+pub struct CW721Swap {
     pub creator: Addr,
     pub nft_contract: Addr,
     pub payment_token: Option<Addr>,
