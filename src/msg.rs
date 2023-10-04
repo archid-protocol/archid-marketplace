@@ -127,6 +127,5 @@ pub struct DetailsResponse {
     pub token_id: String,    
     pub expires: Expiration,    
     pub price: Uint128,
-    pub swap_type: SwapType
-    
+    pub swap_type: SwapType,
 }
