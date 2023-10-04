@@ -71,14 +71,13 @@ fn create_swap(router: &mut App, owner: &Addr, cw721: Addr) -> Addr {
 }
 
 fn create_cw721(router: &mut App,minter: &Addr) -> Addr {
-    //let contract = Cw721Contract::default();
     let cw721_id = router.store_code(contract_cw721());
     let msg = Cw721InstantiateMsg {
         name: "TESTNFT".to_string(),
         symbol: "TSNFT".to_string(),
         minter: String::from(minter),
     };   
-    let contract=router
+    let contract = router
         .instantiate_contract(cw721_id, minter.clone(), &msg, &[], "swap721",None)
         .unwrap();    
     contract
