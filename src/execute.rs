@@ -63,17 +63,50 @@ pub fn execute_create(
         .add_attribute("price", swap.price))
 }
 
-pub fn execute_update(//here
+pub fn execute_update(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: UpdateSwapMsg,
 ) -> Result<Response, ContractError> {
-    
     let swap = SWAPS.load(deps.storage, &msg.id)?;
+
+    // Only creator can update swap
     if info.sender != swap.creator {
         return Err(ContractError::Unauthorized {});
     }
+    // If SwapType::Offer and price has changed, refund
+    // legacy amount and enforce new amount sent (as required)
+    let escrow = if swap.swap_type == SwapType::Offer 
+        && swap.payment_token.is_none()
+        && swap.price != msg.price {
+
+        // Check buyer sent correct payment
+        let required_payment = Coin {
+            denom: DENOM.to_string(),
+            amount: msg.price,
+        };
+        check_sent_required_payment(&info.funds, Some(required_payment))?;
+
+        // Check contract has adequate balance 
+        // (funded at Swap creation)
+        let legacy_escrowed_payment = Coin {
+            denom: DENOM.to_string(),
+            amount: swap.price,
+        };
+        check_contract_balance_ok(env, &deps, legacy_escrowed_payment.clone())?;
+
+        let release_escrow_msg = BankMsg::Send {
+            to_address: info.sender.to_string(),
+            amount: ([legacy_escrowed_payment]).to_vec(),
+        };
+
+        let released_escrow: CosmosMsg = cosmwasm_std::CosmosMsg::Bank(release_escrow_msg);
+        Some(released_escrow)
+    } else {
+        None
+    };
+
     // For security reasons, creator, nft_contract, token_id,  
     // payment_token and swap_type should not be updatable
     // E.g. only price and expiration can be modified
@@ -86,13 +119,15 @@ pub fn execute_update(//here
         price: msg.price,
         swap_type: swap.swap_type,
     };
+    // Remove legacy swap and save updated swap
     SWAPS.remove(deps.storage, &msg.id);
     SWAPS.save(deps.storage, &msg.id, &swap)?;
+
     Ok(Response::new()
         .add_attribute("action", "update")
         .add_attribute("swap_id", &msg.id)
-        .add_attribute("token_id", &swap.token_id))
-
+        .add_attribute("token_id", &swap.token_id)
+        .add_messages(escrow))
 }
 
 pub fn execute_finish(
