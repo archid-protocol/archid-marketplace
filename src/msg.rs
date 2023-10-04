@@ -16,13 +16,19 @@ pub enum ExecuteMsg {
     Create(SwapMsg),
     Finish(SwapMsg),
     Cancel(CancelMsg),
-    Update(SwapMsg),
+    Update(UpdateSwapMsg),
     UpdateConfig { config: Config, },
 }
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct CancelMsg {
     pub id: String,
+}
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct UpdateSwapMsg {
+    pub id: String,
+    pub expires: Expiration,
+    pub price: Uint128,
 }
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct SwapMsg {

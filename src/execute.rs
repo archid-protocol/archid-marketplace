@@ -4,7 +4,7 @@ use crate::state::{CW721Swap, Config, CONFIG, SWAPS, SwapType};
 use crate::utils::{
     check_sent_required_payment, check_contract_balance_ok, query_name_owner, handle_swap_transfers,
 };
-use crate::msg::{CancelMsg, SwapMsg};
+use crate::msg::{CancelMsg, SwapMsg, UpdateSwapMsg};
 use crate::contract::DENOM;
 use crate::error::ContractError;
 
@@ -63,25 +63,28 @@ pub fn execute_create(
         .add_attribute("price", swap.price))
 }
 
-pub fn execute_update(
+pub fn execute_update(//here
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    msg: SwapMsg,
+    msg: UpdateSwapMsg,
 ) -> Result<Response, ContractError> {
     
     let swap = SWAPS.load(deps.storage, &msg.id)?;
     if info.sender != swap.creator {
         return Err(ContractError::Unauthorized {});
     }
+    // For security reasons, creator, nft_contract, token_id,  
+    // payment_token and swap_type should not be updatable
+    // E.g. only price and expiration can be modified
     let swap = CW721Swap {
-        creator: info.sender,
+        creator: swap.creator,
         nft_contract: swap.nft_contract,
-        payment_token: msg.payment_token,
-        token_id: msg.token_id,
+        payment_token: swap.payment_token,
+        token_id: swap.token_id,
         expires: msg.expires,
         price: msg.price,
-        swap_type: msg.swap_type,
+        swap_type: swap.swap_type,
     };
     SWAPS.remove(deps.storage, &msg.id);
     SWAPS.save(deps.storage, &msg.id, &swap)?;
