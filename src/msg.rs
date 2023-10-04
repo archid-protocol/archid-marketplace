@@ -16,7 +16,7 @@ pub enum ExecuteMsg {
     Create(SwapMsg),
     Finish(SwapMsg),
     Cancel(CancelMsg),
-    Update(UpdateSwapMsg),
+    Update(UpdateMsg),
     UpdateConfig { config: Config, },
 }
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -25,7 +25,7 @@ pub struct CancelMsg {
     pub id: String,
 }
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct UpdateSwapMsg {
+pub struct UpdateMsg {
     pub id: String,
     pub expires: Expiration,
     pub price: Uint128,

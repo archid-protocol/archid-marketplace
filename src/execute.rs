@@ -4,7 +4,7 @@ use crate::state::{CW721Swap, Config, CONFIG, SWAPS, SwapType};
 use crate::utils::{
     check_sent_required_payment, check_contract_balance_ok, query_name_owner, handle_swap_transfers,
 };
-use crate::msg::{CancelMsg, SwapMsg, UpdateSwapMsg};
+use crate::msg::{CancelMsg, SwapMsg, UpdateMsg};
 use crate::contract::DENOM;
 use crate::error::ContractError;
 
@@ -67,7 +67,7 @@ pub fn execute_update(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: UpdateSwapMsg,
+    msg: UpdateMsg,
 ) -> Result<Response, ContractError> {
     let swap = SWAPS.load(deps.storage, &msg.id)?;
 
