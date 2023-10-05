@@ -2,7 +2,8 @@ use cosmwasm_std::{BankMsg, Coin, CosmosMsg, DepsMut, Env, MessageInfo, Response
 
 use crate::state::{CW721Swap, Config, CONFIG, SWAPS, SwapType};
 use crate::utils::{
-    check_sent_required_payment, check_contract_balance_ok, query_name_owner, handle_swap_transfers,
+    check_sent_required_payment, check_sent_required_payment_exact, check_contract_balance_ok, 
+    query_name_owner, handle_swap_transfers,
 };
 use crate::msg::{CancelMsg, SwapMsg, UpdateMsg};
 use crate::contract::DENOM;
@@ -32,7 +33,7 @@ pub fn execute_create(
             denom: DENOM.to_string(),
             amount: msg.price,
         };
-        check_sent_required_payment(&info.funds, Some(required_payment))?;
+        check_sent_required_payment_exact(&info.funds, Some(required_payment))?;
     }
     let swap = CW721Swap {
         creator: info.sender,

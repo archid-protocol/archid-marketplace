@@ -22,6 +22,9 @@ pub enum ContractError {
     #[error("Send some coins to create an atomic swap")]
     EmptyBalance {},
 
+    #[error("Must send exactly the required funds to create swap")]
+    ExactFunds {},
+
     #[error("Invalid input")]
     InvalidInput {},
 

@@ -977,8 +977,8 @@ fn test_cw20_offer_accepted() {
     assert_eq!(balance_query.balance, Uint128::from(100000_u32));
 }
 
-// XXX TODO: Fix unreachable balance remaining in Marketplace contract 
-// after a completed SwapType::Offer with overpayment mistake from bidder
+// Over paying will fail, must send exactly the required funds
+// to create a SwapType::Offer for native ARCH
 #[test]
 fn test_overpayment_native_offer() {
     let mut app = mock_app();
@@ -1027,10 +1027,11 @@ fn test_overpayment_native_offer() {
         price: Uint128::from(5000000000000000000_u128), // 5 ARCH as aarch
         swap_type: SwapType::Offer,
     };
-    let finish_msg = creation_msg.clone();
 
-    let _res = app
-        .execute_contract(
+    // Sending more funds than the value of price in creation_msg
+    // causes the tx to fail with ContractError::ExactFunds
+    assert!(
+        app.execute_contract(
             arch_owner.clone(), 
             swap_inst.clone(), 
             &ExecuteMsg::Create(creation_msg), 
@@ -1038,49 +1039,8 @@ fn test_overpayment_native_offer() {
                 denom: String::from(DENOM),
                 amount: Uint128::from(9000000000000000000_u128)
             }]
-        ).unwrap();
-
-    // Marketplace contract has received the escrow (and overpayment)
-    let marketplace_balance: Coin = bank_query(&mut app, &swap_inst);
-    assert_eq!(marketplace_balance.amount, Uint128::from(9000000000000000000_u128));
-
-    // cw721_owner must approve the swap contract to spend their NFT
-    let nft_approve_msg = Cw721ExecuteMsg::Approve::<Extension> {
-        spender: swap.to_string(),
-        token_id: token_id.clone(),
-        expires: None,
-    };
-    let _res = app
-        .execute_contract(cw721_owner.clone(), nft.clone(), &nft_approve_msg, &[])
-        .unwrap();
-
-    // cw721_owner accepts the buyer's offer for 5 ARCH
-    let _res = app
-        .execute_contract(cw721_owner.clone(), swap_inst.clone(), &ExecuteMsg::Finish(finish_msg), &[])
-        .unwrap();
-
-    // cw721_owner has received 5 ARCH
-    let cw721_owner_balance: Coin = bank_query(&mut app, &cw721_owner);
-    assert_eq!(cw721_owner_balance.amount, Uint128::from(5000000000000000000_u128));
-
-    // arch_owner's balance is now 1 ARCH
-    let arch_owner_balance: Coin = bank_query(&mut app, &arch_owner);
-    assert_eq!(arch_owner_balance.amount, Uint128::from(1000000000000000000_u128));
-
-    // arch_owner has received the NFT
-    let owner_query: OwnerOfResponse = query(
-        &mut app,
-        nft.clone(),
-        Cw721QueryMsg::OwnerOf {
-            token_id: token_id, 
-            include_expired: None
-        }
-    ).unwrap();
-    assert_eq!(owner_query.owner, arch_owner);
-
-    // Marketplace contract has released the escrow (but retained the overpayment)
-    let marketplace_balance: Coin = bank_query(&mut app, &swap_inst);
-    assert_eq!(marketplace_balance.amount, Uint128::from(4000000000000000000_u128));
+        ).is_err()
+    );
 }
 
 #[test]

@@ -53,6 +53,29 @@ pub fn check_sent_required_payment(
     Ok(())
 }
 
+pub fn check_sent_required_payment_exact(
+    sent: &[Coin],
+    required: Option<Coin>,
+) -> Result<(), ContractError> {
+    if let Some(required_coin) = required {
+        let required_amount = required_coin.amount.u128();
+        if required_amount > 0 {
+            let sent_exact_funds = sent.iter().any(|coin| {
+                // check if a given sent coin matches denom
+                // and has sent exactly the required amount
+                coin.denom == required_coin.denom && coin.amount.u128() == required_amount
+            });
+
+            if sent_exact_funds {
+                return Ok(());
+            } else {
+                return Err(ContractError::ExactFunds {});
+            }
+        }
+    }
+    Ok(())
+}
+
 pub fn check_contract_balance_ok(
     env: Env,
     deps: &DepsMut,
