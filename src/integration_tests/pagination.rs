@@ -17,7 +17,8 @@ use crate::msg::{
 };
 use crate::state::{CW721Swap, SwapType};
 
-// Listing swaps should be enumerable
+// Listing swaps and querying filter entry points must be enumerable,
+// and must return correct results, totals, and page for all page sizes
 #[test]
 fn test_pagination() {
     let mut app = mock_app();

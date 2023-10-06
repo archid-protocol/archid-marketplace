@@ -121,6 +121,7 @@ fn test_invalid_payment_native() {
     assert_eq!(owner_query.owner, cw721_owner);
 }
 
+// ARCH offers must send the correct ARCH payment
 #[test]
 fn test_invalid_payment_native_offer() {
     let mut app = mock_app();
@@ -198,7 +199,8 @@ fn test_invalid_payment_native_offer() {
     assert_eq!(arch_owner_balance.amount, Uint128::from(10000000000000000000_u128));
 }
 
-// cw721 buyer must approve (and own) sufficien cw20 amount
+// Sales cannot be consumed with invalid payment parameters
+// cw721 buyer must approve (and own) sufficient cw20 amount
 #[test]
 fn test_invalid_payment_cw20() {
     let mut app = mock_app();
@@ -298,6 +300,9 @@ fn test_invalid_payment_cw20() {
     );
 }
 
+// cw20 offers cannot be consumed with invalid approvals, or 
+// insufficient funds. cw20 owners must approve marketplace
+// to spend all funds required by the swap price
 #[test]
 fn test_invalid_payment_cw20_offer() {
     let mut app = mock_app();

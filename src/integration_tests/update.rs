@@ -18,7 +18,7 @@ use crate::msg::{
 use crate::state::{SwapType};
 use crate::contract::DENOM;
 
-// Updating SwapType::Sale
+// Updating a swap of type SwapType::Sale
 #[test]
 fn test_updating_sales() {
     let mut app = mock_app();
@@ -107,7 +107,7 @@ fn test_updating_sales() {
     assert_eq!(swap_details.price, Uint128::from(2000000000000000000_u128));
 }
 
-// Updating SwapType::Offer
+// Updating a swap of type SwapType::Offer
 #[test]
 fn test_updating_offers() {
     let mut app = mock_app();

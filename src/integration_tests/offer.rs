@@ -22,6 +22,7 @@ use crate::state::{SwapType};
 use crate::contract::DENOM;
 
 #[test]
+// cw721_owner accepts an offer for ARCH from arch_owner
 fn test_native_offer_accepted() {
     let mut app = mock_app();
     
@@ -125,11 +126,11 @@ fn test_native_offer_accepted() {
     assert_eq!(marketplace_balance.amount, Uint128::from(0_u128));
 }
 
+// cw721_owner accepts an offer for some cw20 from cw20_owner
 // XXX: cw20 spending approvals will only work for one swap at a time
 // unless the dapp does some logic to calculate the approval cumulatively
 // for all swaps of the cw20 token in question. Unclear how to manage this
 // with expiration date and with Offers being consumed by the NFT owner.
-// Seems like a nightmare from a state management perspective.
 #[test]
 fn test_cw20_offer_accepted() {
     let mut app = mock_app();

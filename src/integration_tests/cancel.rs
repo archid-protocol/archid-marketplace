@@ -110,8 +110,8 @@ fn test_cancel_sales() {
     assert_eq!(listings_of_token.len(), 0);
 }
 
-// Bidders must be able to cancel offers
-// Canceling of an ARCH offer should return escrow
+// Bidders must be able to cancel offers. Canceling 
+// of an ARCH offer must return the user's escrow
 #[test]
 fn test_cancel_offers() {
     let mut app = mock_app();
