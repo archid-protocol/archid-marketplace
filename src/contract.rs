@@ -129,6 +129,7 @@ mod tests {
         mock_dependencies, mock_env, mock_info, MOCK_CONTRACT_ADDR
     };
 
+    // Instantiation works
     #[test]
     fn test_instantiate() {
         let mut deps = mock_dependencies();
