@@ -1,8 +1,18 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use cosmwasm_std::{Addr, Deps, Order, StdResult, Uint128};
 use cw_storage_plus::Bound;
 
 use crate::msg::{DetailsResponse, ListResponse};
 use crate::state::{all_swap_ids, CW721Swap, CONFIG, SWAPS, SwapType};
+
+// Pagination query result format for filtered swap queries
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct PageResult {
+    pub swaps: Vec<CW721Swap>,
+    pub page: u32,
+    pub total: u128,
+}
 
 // Default and Max page sizes for paginated queries
 const MAX_LIMIT: u32 = 100;
@@ -58,7 +68,7 @@ pub fn query_swaps(
     side: SwapType, 
     page: Option<u32>, 
     limit: Option<u32>,
-) -> StdResult<Vec<CW721Swap>> {
+) -> StdResult<PageResult> {
     let page: u32 = page.unwrap_or(0_u32);
     let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
     let config = CONFIG.load(deps.storage)?;
@@ -95,10 +105,15 @@ pub fn query_swaps(
         limit 
     };
 
-    let start = (page * limit) as usize;
+    let start = (page.clone() * limit) as usize;
     let end = (start as u32 + page_size) as usize;
+    let res = PageResult {
+        swaps: results[start..end].to_vec(),
+        page: page,
+        total: results.len() as u128,
+    };
 
-    Ok(results[start..end].to_vec())
+    Ok(res)
 }
 
 pub fn query_swaps_of_token(
@@ -107,7 +122,7 @@ pub fn query_swaps_of_token(
     side: Option<SwapType>, 
     page: Option<u32>, 
     limit: Option<u32>,
-) -> StdResult<Vec<CW721Swap>> {
+) -> StdResult<PageResult> {
     let page: u32 = page.unwrap_or(0_u32);
     let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
     let config = CONFIG.load(deps.storage)?;
@@ -157,10 +172,15 @@ pub fn query_swaps_of_token(
         limit 
     };
 
-    let start = (page * limit) as usize;
+    let start = (page.clone() * limit) as usize;
     let end = (start as u32 + page_size) as usize;
+    let res = PageResult {
+        swaps: results[start..end].to_vec(),
+        page: page,
+        total: results.len() as u128,
+    };
 
-    Ok(results[start..end].to_vec())
+    Ok(res)
 }
 
 pub fn query_swaps_by_creator(
@@ -169,7 +189,7 @@ pub fn query_swaps_by_creator(
     swap_type: Option<SwapType>,
     page: Option<u32>,
     limit: Option<u32>,
-) -> StdResult<Vec<CW721Swap>> {
+) -> StdResult<PageResult> {
     let side: SwapType = swap_type.unwrap_or(SwapType::Sale);
     let page: u32 = page.unwrap_or(0_u32);
     let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
@@ -208,10 +228,15 @@ pub fn query_swaps_by_creator(
         limit 
     };
 
-    let start = (page * limit) as usize;
+    let start = (page.clone() * limit) as usize;
     let end = (start as u32 + page_size) as usize;
+    let res = PageResult {
+        swaps: results[start..end].to_vec(),
+        page: page,
+        total: results.len() as u128,
+    };
 
-    Ok(results[start..end].to_vec())
+    Ok(res)
 }
 
 pub fn query_swaps_by_price(
@@ -221,7 +246,7 @@ pub fn query_swaps_by_price(
     swap_type: Option<SwapType>,
     page: Option<u32>,
     limit: Option<u32>,
-) -> StdResult<Vec<CW721Swap>> {
+) -> StdResult<PageResult> {
     let min: Uint128 = min.unwrap_or(Uint128::from(0_u32));
     let side: SwapType = swap_type.unwrap_or(SwapType::Sale);
     let page: u32 = page.unwrap_or(0_u32);
@@ -276,10 +301,15 @@ pub fn query_swaps_by_price(
         limit 
     };
 
-    let start = (page * limit) as usize;
+    let start = (page.clone() * limit) as usize;
     let end = (start as u32 + page_size) as usize;
+    let res = PageResult {
+        swaps: results[start..end].to_vec(),
+        page: page,
+        total: results.len() as u128,
+    };
 
-    Ok(results[start..end].to_vec())
+    Ok(res)
 }
 
 pub fn query_swaps_by_denom(
@@ -288,7 +318,7 @@ pub fn query_swaps_by_denom(
     swap_type: Option<SwapType>,
     page: Option<u32>,
     limit: Option<u32>,
-) -> StdResult<Vec<CW721Swap>> {
+) -> StdResult<PageResult> {
     let side: SwapType = swap_type.unwrap_or(SwapType::Sale);
     let page: u32 = page.unwrap_or(0_u32);
     let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
@@ -342,10 +372,15 @@ pub fn query_swaps_by_denom(
         limit 
     };
 
-    let start = (page * limit) as usize;
+    let start = (page.clone() * limit) as usize;
     let end = (start as u32 + page_size) as usize;
+    let res = PageResult {
+        swaps: results[start..end].to_vec(),
+        page: page,
+        total: results.len() as u128,
+    };
 
-    Ok(results[start..end].to_vec())
+    Ok(res)
 }
 
 pub fn query_swaps_by_payment_type(
@@ -354,7 +389,7 @@ pub fn query_swaps_by_payment_type(
     swap_type: Option<SwapType>,
     page: Option<u32>,
     limit: Option<u32>,
-) -> StdResult<Vec<CW721Swap>> {
+) -> StdResult<PageResult> {
     let side: SwapType = swap_type.unwrap_or(SwapType::Sale);
     let page: u32 = page.unwrap_or(0_u32);
     let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
@@ -408,8 +443,13 @@ pub fn query_swaps_by_payment_type(
         limit 
     };
 
-    let start = (page * limit) as usize;
+    let start = (page.clone() * limit) as usize;
     let end = (start as u32 + page_size) as usize;
+    let res = PageResult {
+        swaps: results[start..end].to_vec(),
+        page: page,
+        total: results.len() as u128,
+    };
 
-    Ok(results[start..end].to_vec())
+    Ok(res)
 }

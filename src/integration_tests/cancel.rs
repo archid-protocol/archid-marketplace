@@ -15,8 +15,9 @@ use crate::integration_tests::util::{
 use crate::msg::{
     CancelMsg, ExecuteMsg, QueryMsg, SwapMsg,
 };
-use crate::state::{CW721Swap, SwapType};
 use crate::contract::DENOM;
+use crate::state::SwapType;
+use crate::query::PageResult;
 
 // Seller must be able to cancel sale
 // cw20 and native ARCH
@@ -76,7 +77,7 @@ fn test_cancel_sales() {
         .unwrap();
     
     // Query ListingsOfToken entry point (Sales)
-    let listings_of_token: Vec<CW721Swap> = query(
+    let listings_of_token: PageResult = query(
         &mut app,
         swap_inst.clone(),
         QueryMsg::ListingsOfToken {
@@ -87,7 +88,7 @@ fn test_cancel_sales() {
         }
     ).unwrap();
     // 1 Result
-    assert_eq!(listings_of_token.len(), 1);
+    assert_eq!(listings_of_token.swaps.len(), 1);
 
     // cw721 seller (cw721_owner) cancels the swap
     let cancel_msg = CancelMsg { id: swap_id };
@@ -96,7 +97,7 @@ fn test_cancel_sales() {
         .unwrap();
     
     // Query ListingsOfToken entry point (Sales)
-    let listings_of_token: Vec<CW721Swap> = query(
+    let listings_of_token: PageResult = query(
         &mut app,
         swap_inst,
         QueryMsg::ListingsOfToken {
@@ -107,7 +108,7 @@ fn test_cancel_sales() {
         }
     ).unwrap();
     // 0 Results
-    assert_eq!(listings_of_token.len(), 0);
+    assert_eq!(listings_of_token.swaps.len(), 0);
 }
 
 // Bidders must be able to cancel offers. Canceling 
@@ -181,7 +182,7 @@ fn test_cancel_offers() {
     assert_eq!(arch_owner_balance.amount, Uint128::from(1000000000000000000_u128));
 
     // Query ListingsOfToken entry point (Offer)
-    let listings_of_token: Vec<CW721Swap> = query(
+    let listings_of_token: PageResult = query(
         &mut app,
         swap_inst.clone(),
         QueryMsg::ListingsOfToken {
@@ -192,7 +193,7 @@ fn test_cancel_offers() {
         }
     ).unwrap();
     // 1 Result
-    assert_eq!(listings_of_token.len(), 1);
+    assert_eq!(listings_of_token.swaps.len(), 1);
 
     // Bidding buyer (arch_owner) cancels the swap
     let cancel_msg = CancelMsg { id: swap_id };
@@ -209,7 +210,7 @@ fn test_cancel_offers() {
     assert_eq!(arch_owner_balance.amount, Uint128::from(10000000000000000000_u128));
 
     // Query ListingsOfToken entry point (Offer)
-    let listings_of_token: Vec<CW721Swap> = query(
+    let listings_of_token: PageResult = query(
         &mut app,
         swap_inst,
         QueryMsg::ListingsOfToken {
@@ -220,5 +221,5 @@ fn test_cancel_offers() {
         }
     ).unwrap();
     // 0 Results
-    assert_eq!(listings_of_token.len(), 0);
+    assert_eq!(listings_of_token.swaps.len(), 0);
 }

@@ -15,7 +15,8 @@ use crate::integration_tests::util::{
 use crate::msg::{
     ExecuteMsg, ListResponse, QueryMsg, SwapMsg,
 };
-use crate::state::{CW721Swap, SwapType};
+use crate::state::SwapType;
+use crate::query::PageResult;
 
 // Listing swaps and querying filter entry points must be enumerable,
 // and must return correct results, totals, and page for all page sizes
@@ -131,7 +132,7 @@ fn test_pagination() {
 
     // Query GetListings entry point for 2 pages
     // Page 1
-    let page_1b: Vec<CW721Swap> = query(
+    let page_1b: PageResult = query(
         &mut app,
         swap_inst.clone(),
         QueryMsg::GetListings {
@@ -140,7 +141,7 @@ fn test_pagination() {
         }
     ).unwrap();
     // Page 2
-    let page_2b: Vec<CW721Swap> = query(
+    let page_2b: PageResult = query(
         &mut app,
         swap_inst.clone(),
         QueryMsg::GetListings {
@@ -150,12 +151,15 @@ fn test_pagination() {
     ).unwrap();
 
     // Paginated results must have correct page sizes
-    assert_eq!(page_1b.len(), 10);
-    assert_eq!(page_2b.len(), 5);
+    assert_eq!(page_1b.swaps.len(), 10);
+    assert_eq!(page_2b.swaps.len(), 5);
+    // Paginated results must include correct total
+    assert_eq!(page_1b.total, 15);
+    assert_eq!(page_2b.total, 15);
 
     // Paginated results must not have duplicates
-    let mut all_res_b = page_1b.clone();
-    all_res_b.append(&mut page_2b.clone());
+    let mut all_res_b = page_1b.swaps.clone();
+    all_res_b.append(&mut page_2b.swaps.clone());
     let mut token_ids_b: Vec<String> = vec![];
     for swap in all_res_b.iter() {
         token_ids_b.push(swap.clone().token_id);
@@ -164,7 +168,7 @@ fn test_pagination() {
 
     // Query SwapsOf entry point for 2 pages
     // Page 1
-    let page_1c: Vec<CW721Swap> = query(
+    let page_1c: PageResult = query(
         &mut app,
         swap_inst.clone(),
         QueryMsg::SwapsOf {
@@ -175,7 +179,7 @@ fn test_pagination() {
         }
     ).unwrap();
     // Page 2
-    let page_2c: Vec<CW721Swap> = query(
+    let page_2c: PageResult = query(
         &mut app,
         swap_inst.clone(),
         QueryMsg::SwapsOf {
@@ -187,12 +191,15 @@ fn test_pagination() {
     ).unwrap();
 
     // Paginated results must have correct page sizes
-    assert_eq!(page_1c.len(), 10);
-    assert_eq!(page_2c.len(), 5);
+    assert_eq!(page_1c.swaps.len(), 10);
+    assert_eq!(page_2c.swaps.len(), 5);
+    // Paginated results must include correct total
+    assert_eq!(page_1c.total, 15);
+    assert_eq!(page_2c.total, 15);
 
     // Paginated results must not have duplicates
-    let mut all_res_c = page_1c.clone();
-    all_res_c.append(&mut page_2c.clone());
+    let mut all_res_c = page_1c.swaps.clone();
+    all_res_c.append(&mut page_2c.swaps.clone());
     let mut token_ids_c: Vec<String> = vec![];
     for swap in all_res_c.iter() {
         token_ids_c.push(swap.clone().token_id);
@@ -201,7 +208,7 @@ fn test_pagination() {
 
     // Query SwapsByPrice entry point for 2 pages
     // Page 1
-    let page_1d: Vec<CW721Swap> = query(
+    let page_1d: PageResult = query(
         &mut app,
         swap_inst.clone(),
         QueryMsg::SwapsByPrice {
@@ -213,7 +220,7 @@ fn test_pagination() {
         }
     ).unwrap();
     // Page 2
-    let page_2d: Vec<CW721Swap> = query(
+    let page_2d: PageResult = query(
         &mut app,
         swap_inst.clone(),
         QueryMsg::SwapsByPrice {
@@ -226,12 +233,15 @@ fn test_pagination() {
     ).unwrap();
 
     // Paginated results must have correct page sizes
-    assert_eq!(page_1d.len(), 10);
-    assert_eq!(page_2d.len(), 5);
+    assert_eq!(page_1d.swaps.len(), 10);
+    assert_eq!(page_2d.swaps.len(), 5);
+    // Paginated results must include correct total
+    assert_eq!(page_1d.total, 15);
+    assert_eq!(page_2d.total, 15);
 
     // Paginated results must not have duplicates
-    let mut all_res_d = page_1d.clone();
-    all_res_d.append(&mut page_2d.clone());
+    let mut all_res_d = page_1d.swaps.clone();
+    all_res_d.append(&mut page_2d.swaps.clone());
     let mut token_ids_d: Vec<String> = vec![];
     for swap in all_res_d.iter() {
         token_ids_d.push(swap.clone().token_id);
@@ -240,7 +250,7 @@ fn test_pagination() {
 
     // Query SwapsByDenom entry point for 2 pages
     // Page 1
-    let page_1e: Vec<CW721Swap> = query(
+    let page_1e: PageResult = query(
         &mut app,
         swap_inst.clone(),
         QueryMsg::SwapsByDenom {
@@ -251,7 +261,7 @@ fn test_pagination() {
         }
     ).unwrap();
     // Page 2
-    let page_2e: Vec<CW721Swap> = query(
+    let page_2e: PageResult = query(
         &mut app,
         swap_inst.clone(),
         QueryMsg::SwapsByDenom {
@@ -263,12 +273,15 @@ fn test_pagination() {
     ).unwrap();
 
     // Paginated results must have correct page sizes
-    assert_eq!(page_1e.len(), 10);
-    assert_eq!(page_2e.len(), 5);
+    assert_eq!(page_1e.swaps.len(), 10);
+    assert_eq!(page_2e.swaps.len(), 5);
+    // Paginated results must include correct total
+    assert_eq!(page_1e.total, 15);
+    assert_eq!(page_2e.total, 15);
 
     // Paginated results must not have duplicates
-    let mut all_res_e = page_1e.clone();
-    all_res_e.append(&mut page_2e.clone());
+    let mut all_res_e = page_1e.swaps.clone();
+    all_res_e.append(&mut page_2e.swaps.clone());
     let mut token_ids_e: Vec<String> = vec![];
     for swap in all_res_e.iter() {
         token_ids_e.push(swap.clone().token_id);
@@ -278,7 +291,7 @@ fn test_pagination() {
 
     // Query SwapsByPaymentType entry point for 2 pages
     // Page 1
-    let page_1f: Vec<CW721Swap> = query(
+    let page_1f: PageResult = query(
         &mut app,
         swap_inst.clone(),
         QueryMsg::SwapsByPaymentType {
@@ -289,7 +302,7 @@ fn test_pagination() {
         }
     ).unwrap();
     // Page 2
-    let page_2f: Vec<CW721Swap> = query(
+    let page_2f: PageResult = query(
         &mut app,
         swap_inst.clone(),
         QueryMsg::SwapsByPaymentType {
@@ -301,12 +314,15 @@ fn test_pagination() {
     ).unwrap();
 
     // Paginated results must have correct page sizes
-    assert_eq!(page_1f.len(), 10);
-    assert_eq!(page_2f.len(), 5);
+    assert_eq!(page_1f.swaps.len(), 10);
+    assert_eq!(page_2f.swaps.len(), 5);
+    // Paginated results must include correct total
+    assert_eq!(page_1f.total, 15);
+    assert_eq!(page_2f.total, 15);
 
     // Paginated results must not have duplicates
-    let mut all_res_f = page_1f.clone();
-    all_res_f.append(&mut page_2f.clone());
+    let mut all_res_f = page_1f.swaps.clone();
+    all_res_f.append(&mut page_2f.swaps.clone());
     let mut token_ids_f: Vec<String> = vec![];
     for swap in all_res_f.iter() {
         token_ids_f.push(swap.clone().token_id);
@@ -314,7 +330,7 @@ fn test_pagination() {
     assert!(has_unique_elements(token_ids_f));
 
     // Query ListingsOfToken entry point (All Listings)
-    let listings_of_token_a: Vec<CW721Swap> = query(
+    let listings_of_token_a: PageResult = query(
         &mut app,
         swap_inst.clone(),
         QueryMsg::ListingsOfToken {
@@ -325,10 +341,10 @@ fn test_pagination() {
         }
     ).unwrap();
     // 1 Result
-    assert_eq!(listings_of_token_a.len(), 1);
+    assert_eq!(listings_of_token_a.swaps.len(), 1);
 
     // Query ListingsOfToken entry point (Sales)
-    let listings_of_token_b: Vec<CW721Swap> = query(
+    let listings_of_token_b: PageResult = query(
         &mut app,
         swap_inst.clone(),
         QueryMsg::ListingsOfToken {
@@ -339,10 +355,10 @@ fn test_pagination() {
         }
     ).unwrap();
     // 1 Result
-    assert_eq!(listings_of_token_b.len(), 1);
+    assert_eq!(listings_of_token_b.swaps.len(), 1);
 
     // Query ListingsOfToken entry point (Offers)
-    let listings_of_token_c: Vec<CW721Swap> = query(
+    let listings_of_token_c: PageResult = query(
         &mut app,
         swap_inst.clone(),
         QueryMsg::ListingsOfToken {
@@ -353,5 +369,5 @@ fn test_pagination() {
         }
     ).unwrap();
     // 0 Results
-    assert_eq!(listings_of_token_c.len(), 0);
+    assert_eq!(listings_of_token_c.swaps.len(), 0);
 }
