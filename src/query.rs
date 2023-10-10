@@ -105,11 +105,11 @@ pub fn query_swaps(
         limit 
     };
 
-    let start = (page.clone() * limit) as usize;
+    let start = (page * limit) as usize;
     let end = (start as u32 + page_size) as usize;
     let res = PageResult {
         swaps: results[start..end].to_vec(),
-        page: page,
+        page,
         total: results.len() as u128,
     };
 
@@ -172,11 +172,11 @@ pub fn query_swaps_of_token(
         limit 
     };
 
-    let start = (page.clone() * limit) as usize;
+    let start = (page * limit) as usize;
     let end = (start as u32 + page_size) as usize;
     let res = PageResult {
         swaps: results[start..end].to_vec(),
-        page: page,
+        page,
         total: results.len() as u128,
     };
 
@@ -228,11 +228,11 @@ pub fn query_swaps_by_creator(
         limit 
     };
 
-    let start = (page.clone() * limit) as usize;
+    let start = (page * limit) as usize;
     let end = (start as u32 + page_size) as usize;
     let res = PageResult {
         swaps: results[start..end].to_vec(),
-        page: page,
+        page,
         total: results.len() as u128,
     };
 
@@ -301,11 +301,11 @@ pub fn query_swaps_by_price(
         limit 
     };
 
-    let start = (page.clone() * limit) as usize;
+    let start = (page * limit) as usize;
     let end = (start as u32 + page_size) as usize;
     let res = PageResult {
         swaps: results[start..end].to_vec(),
-        page: page,
+        page,
         total: results.len() as u128,
     };
 
@@ -372,11 +372,11 @@ pub fn query_swaps_by_denom(
         limit 
     };
 
-    let start = (page.clone() * limit) as usize;
+    let start = (page * limit) as usize;
     let end = (start as u32 + page_size) as usize;
     let res = PageResult {
         swaps: results[start..end].to_vec(),
-        page: page,
+        page,
         total: results.len() as u128,
     };
 
@@ -443,11 +443,11 @@ pub fn query_swaps_by_payment_type(
         limit 
     };
 
-    let start = (page.clone() * limit) as usize;
+    let start = (page * limit) as usize;
     let end = (start as u32 + page_size) as usize;
     let res = PageResult {
         swaps: results[start..end].to_vec(),
-        page: page,
+        page,
         total: results.len() as u128,
     };
 
