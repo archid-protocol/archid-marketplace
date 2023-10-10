@@ -70,7 +70,7 @@ fn test_finshing_swap_prunes_storage() {
     };
     let finish_msg = sale_msg.clone();
 
-    // Seller (cw721_owner) must approve the swap contract to spend their NFT
+    // cw721_owner must approve the swap contract to spend their NFT
     let nft_approve_msg = Cw721ExecuteMsg::Approve::<Extension> {
         spender: swap.to_string(),
         token_id: token_id.clone(),
@@ -132,6 +132,7 @@ fn test_finshing_swap_prunes_storage() {
             include_expired: None
         }
     ).unwrap();
+    assert_eq!(owner_query.owner, arch_owner);
 
     // cw721_owner has received the ARCH amount
     let balance_query: Coin = bank_query(&mut app, &cw721_owner);
