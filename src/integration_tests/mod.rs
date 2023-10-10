@@ -6,4 +6,5 @@ mod offer;
 mod overpayment;
 mod pagination;
 mod sale;
+mod storage;
 mod update;

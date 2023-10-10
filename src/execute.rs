@@ -1,4 +1,4 @@
-use cosmwasm_std::{BankMsg, Coin, CosmosMsg, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{BankMsg, Coin, CosmosMsg, DepsMut, Env, MessageInfo, Order, Response};
 
 use crate::state::{CW721Swap, Config, CONFIG, SWAPS, SwapType};
 use crate::utils::{
@@ -154,7 +154,7 @@ pub fn execute_finish(
         if swap.swap_type == SwapType::Offer {
             // Check contract has adequate balance 
             // (funded at Swap creation)
-            check_contract_balance_ok(env, &deps, required_payment)?;
+            check_contract_balance_ok(env.clone(), &deps, required_payment)?;
         // Native aarch sale
         } else {
             // Check buyer sent correct payment
@@ -167,7 +167,43 @@ pub fn execute_finish(
         SwapType::Sale => handle_swap_transfers(&swap.creator, &info.sender, swap.clone(), &info.funds)?,
     };
 
-    SWAPS.remove(deps.storage, &msg.id);
+    // Remove all swaps for this token_id 
+    // (as they're no longer invalid)
+    let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
+        .range(deps.storage, None, None, Order::Ascending)
+        .collect();
+    let mut escrow = None;
+    for swap in swaps.unwrap().iter() {
+        if swap.1.token_id == msg.token_id {
+            // Return escrowed ARCH offer before
+            // removing swap (if required)
+            escrow = if swap.1.swap_type == SwapType::Offer 
+                && swap.1.payment_token.is_none() 
+                && swap.0 != msg.id {
+                    // Check contract has adequate balance 
+                    // (funded at Swap creation)
+                    let escrowed_payment = Coin {
+                        denom: DENOM.to_string(),
+                        amount: swap.1.price,
+                    };
+                    check_contract_balance_ok(env.clone(), &deps, escrowed_payment.clone())?;
+            
+                    let release_escrow_msg = BankMsg::Send {
+                        to_address: swap.1.creator.to_string(),
+                        amount: ([escrowed_payment]).to_vec(),
+                    };
+            
+                    let released_escrow: CosmosMsg = cosmwasm_std::CosmosMsg::Bank(release_escrow_msg);
+                    Some(released_escrow)
+            } else {
+                None
+            };
+
+            // Remove swap from storage
+            SWAPS.remove(deps.storage, &swap.0);
+        }
+    }
+
     let payment_token: String = if msg.payment_token.is_some() {
         msg.payment_token.unwrap().to_string()
     } else {
@@ -179,7 +215,8 @@ pub fn execute_finish(
         .add_attribute("token_id", msg.token_id)
         .add_attribute("payment_token", payment_token)
         .add_attribute("price", msg.price)
-        .add_messages(transfer_results))
+        .add_messages(transfer_results)
+        .add_messages(escrow))
 }
 
 pub fn execute_cancel(
