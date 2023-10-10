@@ -80,7 +80,7 @@ fn test_finshing_swap_prunes_storage() {
         .execute_contract(cw721_owner.clone(), nft.clone(), &nft_approve_msg, &[])
         .unwrap();
 
-    // cw721 seller (cw721_owner) creates a swap
+    // cw721_owner creates a swap
     let _res = app
         .execute_contract(cw721_owner.clone(), swap_inst.clone(), &ExecuteMsg::Create(sale_msg), &[])
         .unwrap();
