@@ -123,7 +123,6 @@ fn test_finshing_swap_prunes_storage() {
         )
         .unwrap();
 
-
     // arch_owner has received the NFT
     let owner_query: OwnerOfResponse = query(
         &mut app,
@@ -136,9 +135,17 @@ fn test_finshing_swap_prunes_storage() {
 
     // cw721_owner has received the ARCH amount
     let balance_query: Coin = bank_query(&mut app, &cw721_owner);
-
     assert_eq!(owner_query.owner, arch_owner);
     assert_eq!(balance_query.amount, Uint128::from(1000000000000000000_u128));
+
+    // Marketplace contract has released the escrow
+    let marketplace_balance: Coin = bank_query(&mut app, &swap_inst);
+    assert_eq!(marketplace_balance.amount, Uint128::from(0_u128));
+
+    // arch_owner has received the released escrow
+    // balance must be 9 ARCH (not 8.9 ARCH)
+    let arch_owner_balance: Coin = bank_query(&mut app, &arch_owner);
+    assert_eq!(arch_owner_balance.amount, Uint128::from(9000000000000000000_u128));
 
     // Total swaps must be 0 
     // (both swaps removed from storage)
