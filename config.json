@@ -15,6 +15,21 @@
     "deployments": [
       {
         "project": "archid-marketplace",
+        "type": "migrate",
+        "chainId": "constantine-3",
+        "codeId": 1542,
+        "txhash": "0EF5D6E10B8BEAF31BB4E6730464809A44C2D3366D337EDC5B58FA2594784AC5"
+      },
+      {
+        "project": "archid-marketplace",
+        "type": "store",
+        "chainId": "constantine-3",
+        "codeId": 1542,
+        "checksum": "ea7a110cfe4b1d91ec83cc436e1c1b8c0aad8aa5a2f7c1ddd786a09953b98c7d",
+        "txhash": "4F6C341F3584ED20B4CDF92E0192F6774EF1770BBAA7B6CE266F628128625C15"
+      },
+      {
+        "project": "archid-marketplace",
         "type": "set-metadata",
         "chainId": "archway-1",
         "codeId": 127,
@@ -143,25 +158,25 @@
   },
   "network": {
     "name": "Archway",
-    "chainId": "archway-1",
-    "type": "mainnet",
+    "chainId": "constantine-3",
+    "type": "testnet",
     "fees": {
-      "feeDenom": "aarch"
+      "feeDenom": "aconst"
     },
     "gas": {
-      "prices": "0.002aarch",
+      "prices": "0.002aconst",
       "mode": "auto",
       "adjustment": "1.5"
     },
     "wasm": {
       "bech32Hrp": "archway",
-      "archwayd": "1.0.0-rc.2",
+      "archwayd": "4.0.2",
       "configDir": ".archway",
       "binary": "archwayd"
     },
     "urls": {
       "rpc": {
-        "url": "https://rpc.mainnet.archway.io",
+        "url": "https://rpc.constantine.archway.tech",
         "port": 443
       }
     }
