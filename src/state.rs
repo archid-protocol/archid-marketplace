@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use cosmwasm_std::{
     BlockInfo, Addr, Order, Uint128, Storage, StdResult,
 };
-use cw_storage_plus::{ 
+use cw_storage_plus::{
     Bound, Item, Map,
 };
 
@@ -16,7 +16,7 @@ pub struct Config {
     pub cw721: Addr,
 }
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub enum SwapType{
+pub enum SwapType {
     Offer,
     Sale
 }
