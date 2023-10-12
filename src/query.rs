@@ -96,7 +96,14 @@ pub fn query_swaps(
         limit = MAX_LIMIT;
     }
     let modulo = if total_results > 0 { total_results % limit } else { 0 };
-    let page_size: u32 = if page > 0 { 
+    let last_page = if total_results == 0 {
+        0 
+    } else if modulo > 0 { 
+        total_results / limit 
+    } else {
+        total_results / limit - 1 
+    };
+    let page_size: u32 = if page == last_page { 
         match modulo {
             0 => limit,
             _ => modulo,
@@ -163,7 +170,14 @@ pub fn query_swaps_of_token(
         limit = MAX_LIMIT;
     }
     let modulo = if total_results > 0 { total_results % limit } else { 0 };
-    let page_size: u32 = if page > 0 { 
+    let last_page = if total_results == 0 {
+        0 
+    } else if modulo > 0 { 
+        total_results / limit 
+    } else {
+        total_results / limit - 1 
+    };
+    let page_size: u32 = if page == last_page { 
         match modulo {
             0 => limit,
             _ => modulo,
@@ -219,7 +233,14 @@ pub fn query_swaps_by_creator(
         limit = MAX_LIMIT;
     }
     let modulo = if total_results > 0 { total_results % limit } else { 0 };
-    let page_size: u32 = if page > 0 { 
+    let last_page = if total_results == 0 {
+        0 
+    } else if modulo > 0 { 
+        total_results / limit 
+    } else {
+        total_results / limit - 1 
+    };
+    let page_size: u32 = if page == last_page { 
         match modulo {
             0 => limit,
             _ => modulo,
@@ -292,7 +313,14 @@ pub fn query_swaps_by_price(
         limit = MAX_LIMIT;
     }
     let modulo = if total_results > 0 { total_results % limit } else { 0 };
-    let page_size: u32 = if page > 0 { 
+    let last_page = if total_results == 0 {
+        0 
+    } else if modulo > 0 { 
+        total_results / limit 
+    } else {
+        total_results / limit - 1 
+    };
+    let page_size: u32 = if page == last_page { 
         match modulo {
             0 => limit,
             _ => modulo,
@@ -363,7 +391,14 @@ pub fn query_swaps_by_denom(
         limit = MAX_LIMIT;
     }
     let modulo = if total_results > 0 { total_results % limit } else { 0 };
-    let page_size: u32 = if page > 0 { 
+    let last_page = if total_results == 0 {
+        0 
+    } else if modulo > 0 { 
+        total_results / limit 
+    } else {
+        total_results / limit - 1 
+    };
+    let page_size: u32 = if page == last_page { 
         match modulo {
             0 => limit,
             _ => modulo,
@@ -434,7 +469,14 @@ pub fn query_swaps_by_payment_type(
         limit = MAX_LIMIT;
     }
     let modulo = if total_results > 0 { total_results % limit } else { 0 };
-    let page_size: u32 = if page > 0 { 
+    let last_page = if total_results == 0 {
+        0 
+    } else if modulo > 0 { 
+        total_results / limit 
+    } else {
+        total_results / limit - 1 
+    };
+    let page_size: u32 = if page == last_page { 
         match modulo {
             0 => limit,
             _ => modulo,
