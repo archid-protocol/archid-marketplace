@@ -1,22 +1,23 @@
 #![cfg(test)]
 use cosmwasm_std::{
-    Addr, Coin, Uint128,
+    Addr, Uint128,
 };
 use cw_multi_test::Executor;
 
-use cw20::Expiration;
+use cw20::{
+    Cw20ExecuteMsg, Expiration,
+};
 use cw721_base::{
     msg::ExecuteMsg as Cw721ExecuteMsg, Extension, MintMsg,
 };
 
 use crate::integration_tests::util::{
-    bank_query, create_cw721, create_swap, mint_native, mock_app, query,
+    create_cw20, create_cw721, create_swap, mock_app, query,
 };
 use crate::msg::{
     DetailsResponse, ExecuteMsg, QueryMsg, SwapMsg, UpdateMsg,
 };
 use crate::state::{SwapType};
-use crate::contract::DENOM;
 
 // Updating a swap of type SwapType::Sale
 #[test]
@@ -116,8 +117,8 @@ fn test_updating_offers() {
     let swap_admin = Addr::unchecked("swap_deployer");
     // cw721_owner owns the cw721
     let cw721_owner = Addr::unchecked("original_owner");
-    // arch_owner owns ARCH
-    let arch_owner = Addr::unchecked("arch_owner");
+    // cw20_owner owns wARCH (wrapped ARCH)
+    let cw20_owner = Addr::unchecked("cw20_owner");
 
     // cw721_owner creates the cw721
     let nft = create_cw721(&mut app, &cw721_owner);
@@ -126,12 +127,15 @@ fn test_updating_offers() {
     let swap = create_swap(&mut app, &swap_admin, nft.clone());
     let swap_inst = swap.clone();
     
-    // Mint native to `arch_owner`
-    mint_native(
+    // cw20_owner creates a cw20 coin
+    let cw20 = create_cw20(
         &mut app,
-        arch_owner.to_string(),
-        Uint128::from(10000000000000000000_u128), // 10 ARCH as aarch
+        &cw20_owner,
+        "wrapped arch".to_string(),
+        "wARCH".to_string(),
+        Uint128::from(9000000000000000000_u128), // 9 wARCH
     );
+    let cw20_inst = cw20.clone();
 
     // cw721_owner mints a cw721 
     let token_id = "petrify".to_string();
@@ -146,35 +150,34 @@ fn test_updating_offers() {
         .execute_contract(cw721_owner.clone(), nft.clone(), &mint_msg, &[])
         .unwrap();
 
+    // Bidding buyer (cw20_owner) must approve swap contract to spend their cw20
+    let cw20_approve_msg = Cw20ExecuteMsg::IncreaseAllowance {
+        spender: swap.to_string(),
+        amount:  Uint128::from(9000000000000000000_u128),
+        expires: None,
+    };
+    let _res = app
+        .execute_contract(cw20_owner.clone(), cw20_inst, &cw20_approve_msg, &[])
+        .unwrap();
+
     // Bidding buyer creates an offer
     let swap_id: String = "firstswap".to_string();
     let creation_msg = SwapMsg {
         id: swap_id.clone(),
-        payment_token: None,
+        payment_token: Some(Addr::unchecked(cw20)),
         token_id: token_id.clone(),    
         expires: Expiration::from(cw20::Expiration::AtHeight(384798573487439743)),
-        price: Uint128::from(9000000000000000000_u128), // 9 ARCH as aarch
+        price: Uint128::from(9000000000000000000_u128), // 9 wARCH
         swap_type: SwapType::Offer,
     };
 
     let _res = app
         .execute_contract(
-            arch_owner.clone(), 
+            cw20_owner.clone(), 
             swap_inst.clone(), 
             &ExecuteMsg::Create(creation_msg), 
-            &[Coin {
-                denom: String::from(DENOM),
-                amount: Uint128::from(9000000000000000000_u128)
-            }]
+            &[]
         ).unwrap();
-
-    // Marketplace contract has received the escrow
-    let marketplace_balance: Coin = bank_query(&mut app, &swap_inst);
-    assert_eq!(marketplace_balance.amount, Uint128::from(9000000000000000000_u128));
-
-    // Bidding buyer's account has been debited
-    let arch_owner_balance: Coin = bank_query(&mut app, &arch_owner);
-    assert_eq!(arch_owner_balance.amount, Uint128::from(1000000000000000000_u128));
 
     // Original swap details (price and expiration) are correct
     let swap_details: DetailsResponse = query(
@@ -188,54 +191,30 @@ fn test_updating_offers() {
     assert_eq!(swap_details.expires, Expiration::from(cw20::Expiration::AtHeight(384798573487439743)));
     assert_eq!(swap_details.price, Uint128::from(9000000000000000000_u128));
 
-    // Bidder (arch_owner) updates the swap
+    // Bidder (cw20_owner) updates the swap
     let update_msg = UpdateMsg {
         id: swap_id.clone(),
         expires: Expiration::from(cw20::Expiration::AtHeight(400000000000000000)),
         price: Uint128::from(1000000000000000000_u128),
     };
-    // Swap update fails if the correct updated escrow amount is not sent
-    assert!(
-        // No escrow sent
-        app.execute_contract(
-            arch_owner.clone(), 
-            swap_inst.clone(), 
-            &ExecuteMsg::Update(update_msg.clone()), 
-            &[],
-        ).is_err()
-    );
-    assert!(
-        // Escrow too low
-        app.execute_contract(
-            arch_owner.clone(), 
-            swap_inst.clone(), 
-            &ExecuteMsg::Update(update_msg.clone()), 
-            &[Coin {
-                denom: String::from(DENOM),
-                amount: Uint128::from(10000000000_u128),
-            }],
-        ).is_err()
-    );
-    // Sending UpdateMsg with the correct updated escrow succeeds
     let _res = app
         .execute_contract(
-            arch_owner.clone(), 
+            cw20_owner.clone(), 
             swap_inst.clone(), 
             &ExecuteMsg::Update(update_msg), 
-            &[Coin {
-                denom: String::from(DENOM),
-                amount: Uint128::from(1000000000000000000_u128),
-            }],
+            &[],
         )
         .unwrap();
 
-    // Marketplace contract has released the legacy escrow (9 ARCH)
-    // and received the incoming escrow (1 ARCH) of the new swap price
-    let marketplace_balance: Coin = bank_query(&mut app, &swap_inst);
-    assert_eq!(marketplace_balance.amount, Uint128::from(1000000000000000000_u128));
+    // Swap details were correctly updated
+    let swap_details: DetailsResponse = query(
+        &mut app,
+        swap_inst.clone(),
+        QueryMsg::Details {
+            id: swap_id.clone(),
+        }
+    ).unwrap();
 
-    // Bidding buyer's account has been debited the new swap price (1 ARCH)
-    // and has received the legacy escrow (9 ARCH) from the marketplace
-    let arch_owner_balance: Coin = bank_query(&mut app, &arch_owner);
-    assert_eq!(arch_owner_balance.amount, Uint128::from(9000000000000000000_u128));
+    assert_eq!(swap_details.expires, Expiration::from(cw20::Expiration::AtHeight(400000000000000000)));
+    assert_eq!(swap_details.price, Uint128::from(1000000000000000000_u128));
 }

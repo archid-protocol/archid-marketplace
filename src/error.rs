@@ -25,6 +25,9 @@ pub enum ContractError {
     #[error("Must send exactly the required funds")]
     ExactFunds {},
 
+    #[error("Invalid payment token")]
+    InvalidPaymentToken {},
+
     #[error("Invalid input")]
     InvalidInput {},
 

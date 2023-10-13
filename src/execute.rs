@@ -1,9 +1,8 @@
-use cosmwasm_std::{BankMsg, Coin, CosmosMsg, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{Coin, DepsMut, Env, MessageInfo, Response};
 
 use crate::state::{CW721Swap, Config, CONFIG, SWAPS, SwapType};
 use crate::utils::{
-    check_sent_required_payment, check_sent_required_payment_exact, check_contract_balance_ok, 
-    query_name_owner, handle_swap_transfers,
+    check_sent_required_payment, query_name_owner, handle_swap_transfers,
 };
 use crate::msg::{CancelMsg, SwapMsg, UpdateMsg};
 use crate::contract::DENOM;
@@ -25,15 +24,11 @@ pub fn execute_create(
     if msg.swap_type == SwapType::Sale {
         let owner = query_name_owner(&msg.token_id, &config.cw721, &deps).unwrap();
         if owner.owner != info.sender {
-            return Err(ContractError::Unauthorized);
+            return Err(ContractError::Unauthorized {});
         }
     // SwapType::Offer
     } else if msg.swap_type == SwapType::Offer && !has_payment_token {
-        let required_payment = Coin {
-            denom: DENOM.to_string(),
-            amount: msg.price,
-        };
-        check_sent_required_payment_exact(&info.funds, Some(required_payment))?;
+        return Err(ContractError::InvalidPaymentToken {});
     }
     let swap = CW721Swap {
         creator: info.sender,
@@ -66,7 +61,7 @@ pub fn execute_create(
 
 pub fn execute_update(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     msg: UpdateMsg,
 ) -> Result<Response, ContractError> {
@@ -76,37 +71,6 @@ pub fn execute_update(
     if info.sender != swap.creator {
         return Err(ContractError::Unauthorized {});
     }
-    // If SwapType::Offer and price has changed, refund
-    // legacy amount and enforce new amount sent (as required)
-    let escrow = if swap.swap_type == SwapType::Offer 
-        && swap.payment_token.is_none()
-        && swap.price != msg.price {
-
-        // Check buyer sent correct payment
-        let required_payment = Coin {
-            denom: DENOM.to_string(),
-            amount: msg.price,
-        };
-        check_sent_required_payment(&info.funds, Some(required_payment))?;
-
-        // Check contract has adequate balance 
-        // (funded at Swap creation)
-        let legacy_escrowed_payment = Coin {
-            denom: DENOM.to_string(),
-            amount: swap.price,
-        };
-        check_contract_balance_ok(env, &deps, legacy_escrowed_payment.clone())?;
-
-        let release_escrow_msg = BankMsg::Send {
-            to_address: info.sender.to_string(),
-            amount: ([legacy_escrowed_payment]).to_vec(),
-        };
-
-        let released_escrow: CosmosMsg = cosmwasm_std::CosmosMsg::Bank(release_escrow_msg);
-        Some(released_escrow)
-    } else {
-        None
-    };
 
     // For security reasons, creator, nft_contract, token_id,  
     // payment_token and swap_type should not be updatable
@@ -127,8 +91,7 @@ pub fn execute_update(
     Ok(Response::new()
         .add_attribute("action", "update")
         .add_attribute("swap_id", &msg.id)
-        .add_attribute("token_id", &swap.token_id)
-        .add_messages(escrow))
+        .add_attribute("token_id", &swap.token_id))
 }
 
 pub fn execute_finish(
@@ -150,15 +113,11 @@ pub fn execute_finish(
             denom: DENOM.to_string(),
             amount: swap.price,
         };
-        // Native aarch offer
+        check_sent_required_payment(&info.funds, Some(required_payment))?;
+
+        // Native aarch offers not allowed
         if swap.swap_type == SwapType::Offer {
-            // Check contract has adequate balance 
-            // (funded at Swap creation)
-            check_contract_balance_ok(env, &deps, required_payment)?;
-        // Native aarch sale
-        } else {
-            // Check buyer sent correct payment
-            check_sent_required_payment(&info.funds, Some(required_payment))?;
+            return Err(ContractError::InvalidInput {});
         }
     }
   
@@ -184,7 +143,7 @@ pub fn execute_finish(
 
 pub fn execute_cancel(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     msg: CancelMsg,
 ) -> Result<Response, ContractError> {
@@ -192,36 +151,12 @@ pub fn execute_cancel(
     if info.sender != swap.creator {
         return Err(ContractError::Unauthorized {});
     }
-    
-    // Return escrowed funds if SwapType::Offer
-    // and payment_token is ARCH (e.g. not cw20)
-    let escrow = if swap.swap_type == SwapType::Offer && swap.payment_token.is_none() {
-        // Check contract has adequate balance 
-        // (funded at Swap creation)
-        let escrowed_payment = Coin {
-            denom: DENOM.to_string(),
-            amount: swap.price,
-        };
-        check_contract_balance_ok(env, &deps, escrowed_payment.clone())?;
-
-        let release_escrow_msg = BankMsg::Send {
-            to_address: info.sender.to_string(),
-            amount: ([escrowed_payment]).to_vec(),
-        };
-
-        let released_escrow: CosmosMsg = cosmwasm_std::CosmosMsg::Bank(release_escrow_msg);
-        Some(released_escrow)
-    } else {
-        None
-    };
 
     SWAPS.remove(deps.storage, &msg.id);
 
     Ok(Response::new()
         .add_attribute("action", "cancel")
-        .add_attribute("swap_id", msg.id)
-        .add_messages(escrow)
-    )
+        .add_attribute("swap_id", msg.id))
 }
 
 pub fn execute_update_config(
