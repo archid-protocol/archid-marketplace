@@ -17,6 +17,21 @@
         "project": "archid-marketplace",
         "type": "migrate",
         "chainId": "constantine-3",
+        "codeId": 1556,
+        "txhash": "FDE32851B5A56266F1E1537B4C97D573C218EDBB09F90F2F6B3CFFBC8CBFB104"
+      },
+      {
+        "project": "archid-marketplace",
+        "type": "store",
+        "chainId": "constantine-3",
+        "codeId": 1556,
+        "checksum": "ad3acb1ad9a7b832d92f5fc612d970e10c7928cc2418a66a060223ff9a51739f",
+        "txhash": "A420DEF51BC32A1205471A51A85218897D0E34CEB6A24E9B542353208E66DA3B"
+      },
+      {
+        "project": "archid-marketplace",
+        "type": "migrate",
+        "chainId": "constantine-3",
         "codeId": 1555,
         "txhash": "1FDFAFAE510FB14D46CC469D05EC51EB1C85422D0379A425B3A136408DA26AE9"
       },
