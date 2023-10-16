@@ -1,3 +1,5 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use cosmwasm_std::{
     Addr, BalanceResponse, BankMsg, BankQuery, Coin, CosmosMsg, DepsMut, Env, from_binary, QueryRequest, 
     to_binary, StdError, StdResult, WasmMsg, WasmQuery,
@@ -11,6 +13,19 @@ use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, Extension};
 use crate::contract::DENOM;
 use crate::state::{CW721Swap, SwapType};
 use crate::error::ContractError;
+
+// Default and Max page sizes for paginated queries
+const MAX_LIMIT: u32 = 100;
+const DEFAULT_LIMIT: u32 = 10;
+
+// Pagination query pagaination parameters for filtered swap queries
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct PageParams {
+    pub start: usize,
+    pub end: usize,
+    pub page: u32,
+    pub total: u128,
+}
 
 // Read utils
 pub fn query_name_owner(
@@ -27,6 +42,51 @@ pub fn query_name_owner(
         msg: to_binary(&query_msg).unwrap(),
     });
     let res: OwnerOfResponse = deps.querier.query(&req)?;
+    Ok(res)
+}
+
+pub fn calculate_page_params(
+    page: Option<u32>,
+    limit: Option<u32>,
+    total_results: u32,
+) -> Result<PageParams, StdError> {
+    let page: u32 = page.unwrap_or(0_u32);
+    let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
+    // Calculate dynamic limit and last page size
+    if total_results < limit {
+        limit = total_results;
+    } else if limit < DEFAULT_LIMIT {
+        limit = DEFAULT_LIMIT;
+    } else if limit > MAX_LIMIT {
+        limit = MAX_LIMIT;
+    }
+    let modulo = if total_results > 0 { total_results % limit } else { 0 };
+    let last_page = if total_results == 0 {
+        0 
+    } else if modulo > 0 { 
+        total_results / limit 
+    } else {
+        total_results / limit - 1 
+    };
+    let page_size: u32 = if page == last_page { 
+        match modulo {
+            0 => limit,
+            _ => modulo,
+        }
+    } else { 
+        limit 
+    };
+
+    // Results
+    let start = (page * limit) as usize;
+    let end = (start as u32 + page_size) as usize;
+    let res = PageParams {
+        start,
+        end, 
+        page,
+        total: total_results as u128,
+    };
+
     Ok(res)
 }
 

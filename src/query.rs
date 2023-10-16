@@ -5,6 +5,7 @@ use cw_storage_plus::Bound;
 
 use crate::msg::{DetailsResponse, ListResponse};
 use crate::state::{all_swap_ids, CW721Swap, CONFIG, SWAPS, SwapType};
+use crate::utils::{calculate_page_params, PageParams};
 
 // Pagination query result format for filtered swap queries
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -69,8 +70,6 @@ pub fn query_swaps(
     page: Option<u32>, 
     limit: Option<u32>,
 ) -> StdResult<PageResult> {
-    let page: u32 = page.unwrap_or(0_u32);
-    let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
         .range(deps.storage, None, None, Order::Ascending)
@@ -86,38 +85,11 @@ pub fn query_swaps(
         })
         .collect();
 
-    // Dynamic limit and last page size
-    let total_results = results.len() as u32;
-    if total_results < limit {
-        limit = total_results;
-    } else if limit < DEFAULT_LIMIT {
-        limit = DEFAULT_LIMIT;
-    } else if limit > MAX_LIMIT {
-        limit = MAX_LIMIT;
-    }
-    let modulo = if total_results > 0 { total_results % limit } else { 0 };
-    let last_page = if total_results == 0 {
-        0 
-    } else if modulo > 0 { 
-        total_results / limit 
-    } else {
-        total_results / limit - 1 
-    };
-    let page_size: u32 = if page == last_page { 
-        match modulo {
-            0 => limit,
-            _ => modulo,
-        }
-    } else { 
-        limit 
-    };
-
-    let start = (page * limit) as usize;
-    let end = (start as u32 + page_size) as usize;
+    let paging: PageParams = calculate_page_params(page, limit, results.len() as u32)?;
     let res = PageResult {
-        swaps: results[start..end].to_vec(),
-        page,
-        total: results.len() as u128,
+        swaps: results[paging.start..paging.end].to_vec(),
+        page: paging.page,
+        total: paging.total,
     };
 
     Ok(res)
@@ -130,8 +102,6 @@ pub fn query_swaps_of_token(
     page: Option<u32>, 
     limit: Option<u32>,
 ) -> StdResult<PageResult> {
-    let page: u32 = page.unwrap_or(0_u32);
-    let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
         .range(deps.storage, None, None, Order::Ascending)
@@ -160,38 +130,11 @@ pub fn query_swaps_of_token(
             .collect()
     };
 
-    // Dynamic limit and last page size
-    let total_results = results.len() as u32;
-    if total_results < limit {
-        limit = total_results;
-    } else if limit < DEFAULT_LIMIT {
-        limit = DEFAULT_LIMIT;
-    } else if limit > MAX_LIMIT {
-        limit = MAX_LIMIT;
-    }
-    let modulo = if total_results > 0 { total_results % limit } else { 0 };
-    let last_page = if total_results == 0 {
-        0 
-    } else if modulo > 0 { 
-        total_results / limit 
-    } else {
-        total_results / limit - 1 
-    };
-    let page_size: u32 = if page == last_page { 
-        match modulo {
-            0 => limit,
-            _ => modulo,
-        }
-    } else { 
-        limit 
-    };
-
-    let start = (page * limit) as usize;
-    let end = (start as u32 + page_size) as usize;
+    let paging: PageParams = calculate_page_params(page, limit, results.len() as u32)?;
     let res = PageResult {
-        swaps: results[start..end].to_vec(),
-        page,
-        total: results.len() as u128,
+        swaps: results[paging.start..paging.end].to_vec(),
+        page: paging.page,
+        total: paging.total,
     };
 
     Ok(res)
@@ -205,8 +148,6 @@ pub fn query_swaps_by_creator(
     limit: Option<u32>,
 ) -> StdResult<PageResult> {
     let side: SwapType = swap_type.unwrap_or(SwapType::Sale);
-    let page: u32 = page.unwrap_or(0_u32);
-    let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
         .range(deps.storage, None, None, Order::Ascending)
@@ -223,38 +164,11 @@ pub fn query_swaps_by_creator(
         })
         .collect();
 
-    // Dynamic limit and last page size
-    let total_results = results.len() as u32;
-    if total_results < limit {
-        limit = total_results;
-    } else if limit < DEFAULT_LIMIT {
-        limit = DEFAULT_LIMIT;
-    } else if limit > MAX_LIMIT {
-        limit = MAX_LIMIT;
-    }
-    let modulo = if total_results > 0 { total_results % limit } else { 0 };
-    let last_page = if total_results == 0 {
-        0 
-    } else if modulo > 0 { 
-        total_results / limit 
-    } else {
-        total_results / limit - 1 
-    };
-    let page_size: u32 = if page == last_page { 
-        match modulo {
-            0 => limit,
-            _ => modulo,
-        }
-    } else { 
-        limit 
-    };
-
-    let start = (page * limit) as usize;
-    let end = (start as u32 + page_size) as usize;
+    let paging: PageParams = calculate_page_params(page, limit, results.len() as u32)?;
     let res = PageResult {
-        swaps: results[start..end].to_vec(),
-        page,
-        total: results.len() as u128,
+        swaps: results[paging.start..paging.end].to_vec(),
+        page: paging.page,
+        total: paging.total,
     };
 
     Ok(res)
@@ -270,8 +184,6 @@ pub fn query_swaps_by_price(
 ) -> StdResult<PageResult> {
     let min: Uint128 = min.unwrap_or(Uint128::from(0_u32));
     let side: SwapType = swap_type.unwrap_or(SwapType::Sale);
-    let page: u32 = page.unwrap_or(0_u32);
-    let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
         .range(deps.storage, None, None, Order::Ascending)
@@ -303,38 +215,11 @@ pub fn query_swaps_by_price(
             .collect()
     };
 
-    // Dynamic limit and last page size
-    let total_results = results.len() as u32;
-    if total_results < limit {
-        limit = total_results;
-    } else if limit < DEFAULT_LIMIT {
-        limit = DEFAULT_LIMIT;
-    } else if limit > MAX_LIMIT {
-        limit = MAX_LIMIT;
-    }
-    let modulo = if total_results > 0 { total_results % limit } else { 0 };
-    let last_page = if total_results == 0 {
-        0 
-    } else if modulo > 0 { 
-        total_results / limit 
-    } else {
-        total_results / limit - 1 
-    };
-    let page_size: u32 = if page == last_page { 
-        match modulo {
-            0 => limit,
-            _ => modulo,
-        }
-    } else { 
-        limit 
-    };
-
-    let start = (page * limit) as usize;
-    let end = (start as u32 + page_size) as usize;
+    let paging: PageParams = calculate_page_params(page, limit, results.len() as u32)?;
     let res = PageResult {
-        swaps: results[start..end].to_vec(),
-        page,
-        total: results.len() as u128,
+        swaps: results[paging.start..paging.end].to_vec(),
+        page: paging.page,
+        total: paging.total,
     };
 
     Ok(res)
@@ -348,8 +233,6 @@ pub fn query_swaps_by_denom(
     limit: Option<u32>,
 ) -> StdResult<PageResult> {
     let side: SwapType = swap_type.unwrap_or(SwapType::Sale);
-    let page: u32 = page.unwrap_or(0_u32);
-    let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
         .range(deps.storage, None, None, Order::Ascending)
@@ -381,38 +264,11 @@ pub fn query_swaps_by_denom(
             .collect()
     };
 
-    // Dynamic limit and last page size
-    let total_results = results.len() as u32;
-    if total_results < limit {
-        limit = total_results;
-    } else if limit < DEFAULT_LIMIT {
-        limit = DEFAULT_LIMIT;
-    } else if limit > MAX_LIMIT {
-        limit = MAX_LIMIT;
-    }
-    let modulo = if total_results > 0 { total_results % limit } else { 0 };
-    let last_page = if total_results == 0 {
-        0 
-    } else if modulo > 0 { 
-        total_results / limit 
-    } else {
-        total_results / limit - 1 
-    };
-    let page_size: u32 = if page == last_page { 
-        match modulo {
-            0 => limit,
-            _ => modulo,
-        }
-    } else { 
-        limit 
-    };
-
-    let start = (page * limit) as usize;
-    let end = (start as u32 + page_size) as usize;
+    let paging: PageParams = calculate_page_params(page, limit, results.len() as u32)?;
     let res = PageResult {
-        swaps: results[start..end].to_vec(),
-        page,
-        total: results.len() as u128,
+        swaps: results[paging.start..paging.end].to_vec(),
+        page: paging.page,
+        total: paging.total,
     };
 
     Ok(res)
@@ -426,8 +282,6 @@ pub fn query_swaps_by_payment_type(
     limit: Option<u32>,
 ) -> StdResult<PageResult> {
     let side: SwapType = swap_type.unwrap_or(SwapType::Sale);
-    let page: u32 = page.unwrap_or(0_u32);
-    let mut limit: u32 = limit.unwrap_or(DEFAULT_LIMIT);
     let config = CONFIG.load(deps.storage)?;
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
         .range(deps.storage, None, None, Order::Ascending)
@@ -459,38 +313,11 @@ pub fn query_swaps_by_payment_type(
             .collect()
     };
 
-    // Dynamic limit and last page size
-    let total_results = results.len() as u32;
-    if total_results < limit {
-        limit = total_results;
-    } else if limit < DEFAULT_LIMIT {
-        limit = DEFAULT_LIMIT;
-    } else if limit > MAX_LIMIT {
-        limit = MAX_LIMIT;
-    }
-    let modulo = if total_results > 0 { total_results % limit } else { 0 };
-    let last_page = if total_results == 0 {
-        0 
-    } else if modulo > 0 { 
-        total_results / limit 
-    } else {
-        total_results / limit - 1 
-    };
-    let page_size: u32 = if page == last_page { 
-        match modulo {
-            0 => limit,
-            _ => modulo,
-        }
-    } else { 
-        limit 
-    };
-
-    let start = (page * limit) as usize;
-    let end = (start as u32 + page_size) as usize;
+    let paging: PageParams = calculate_page_params(page, limit, results.len() as u32)?;
     let res = PageResult {
-        swaps: results[start..end].to_vec(),
-        page,
-        total: results.len() as u128,
+        swaps: results[paging.start..paging.end].to_vec(),
+        page: paging.page,
+        total: paging.total,
     };
 
     Ok(res)
