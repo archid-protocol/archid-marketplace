@@ -94,7 +94,7 @@
           ],
           "properties": {
             "update": {
-              "$ref": "#/definitions/SwapMsg"
+              "$ref": "#/definitions/UpdateMsg"
             }
           },
           "additionalProperties": false
@@ -242,18 +242,22 @@
           "properties": {
             "get_offers": {
               "type": "object",
-              "required": [
-                "page",
-                "token_id"
-              ],
               "properties": {
-                "page": {
-                  "type": "integer",
+                "limit": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
                   "format": "uint32",
                   "minimum": 0.0
                 },
-                "token_id": {
-                  "type": "string"
+                "page": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint32",
+                  "minimum": 0.0
                 }
               }
             }
@@ -269,15 +273,66 @@
           "properties": {
             "get_listings": {
               "type": "object",
+              "properties": {
+                "limit": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                "page": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint32",
+                  "minimum": 0.0
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Get all listings for a token of type `Swap::Sale` and `Swap::Offer` or both (`None`)",
+          "type": "object",
+          "required": [
+            "listings_of_token"
+          ],
+          "properties": {
+            "listings_of_token": {
+              "type": "object",
               "required": [
-                "page",
                 "token_id"
               ],
               "properties": {
-                "page": {
-                  "type": "integer",
+                "limit": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
                   "format": "uint32",
                   "minimum": 0.0
+                },
+                "page": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                "swap_type": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/SwapType"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 },
                 "token_id": {
                   "type": "string"
@@ -288,7 +343,7 @@
           "additionalProperties": false
         },
         {
-          "description": "Show all swaps created by a specific address Results include both `SwapType::Offer` and `SwapType::Sale`",
+          "description": "Show all swaps created by a specific address Defaults to SwapType::Sale if no `swap_type`",
           "type": "object",
           "required": [
             "swaps_of"
@@ -302,6 +357,191 @@
               "properties": {
                 "address": {
                   "$ref": "#/definitions/Addr"
+                },
+                "limit": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                "page": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                "swap_type": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/SwapType"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Show all swaps of a given price range",
+          "type": "object",
+          "required": [
+            "swaps_by_price"
+          ],
+          "properties": {
+            "swaps_by_price": {
+              "type": "object",
+              "properties": {
+                "limit": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                "max": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/Uint128"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "min": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/Uint128"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "page": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                "swap_type": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/SwapType"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Show all swaps of a given denom (contract address) Defaults to ARCH if no contract is sent",
+          "type": "object",
+          "required": [
+            "swaps_by_denom"
+          ],
+          "properties": {
+            "swaps_by_denom": {
+              "type": "object",
+              "properties": {
+                "limit": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                "page": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                "payment_token": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/Addr"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "swap_type": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/SwapType"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Show all cw20 swaps, or all ARCH swaps",
+          "type": "object",
+          "required": [
+            "swaps_by_payment_type"
+          ],
+          "properties": {
+            "swaps_by_payment_type": {
+              "type": "object",
+              "required": [
+                "cw20"
+              ],
+              "properties": {
+                "cw20": {
+                  "type": "boolean"
+                },
+                "limit": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                "page": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                "swap_type": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/SwapType"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               }
             }
@@ -390,6 +630,25 @@
     "Uint64": {
       "description": "A thin wrapper around u64 that is using strings for JSON encoding/decoding, such that the full u64 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u64` to get the value out:\n\n``` # use cosmwasm_std::Uint64; let a = Uint64::from(42u64); assert_eq!(a.u64(), 42);\n\nlet b = Uint64::from(70u32); assert_eq!(b.u64(), 70); ```",
       "type": "string"
+    },
+    "UpdateMsg": {
+      "type": "object",
+      "required": [
+        "expires",
+        "id",
+        "price"
+      ],
+      "properties": {
+        "expires": {
+          "$ref": "#/definitions/Expiration"
+        },
+        "id": {
+          "type": "string"
+        },
+        "price": {
+          "$ref": "#/definitions/Uint128"
+        }
+      }
     }
   }
 }
