@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{Coin, DepsMut, Env, MessageInfo, Order, Response};
 
 use crate::state::{CW721Swap, Config, CONFIG, SWAPS, SwapType};
 use crate::utils::{
@@ -126,7 +126,17 @@ pub fn execute_finish(
         SwapType::Sale => handle_swap_transfers(&swap.creator, &info.sender, swap.clone(), &info.funds)?,
     };
 
-    SWAPS.remove(deps.storage, &msg.id);
+    // Remove all swaps for this token_id 
+    // (as they're no longer invalid)
+    let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
+        .range(deps.storage, None, None, Order::Ascending)
+        .collect();
+    for swap in swaps.unwrap().iter() {
+        if swap.1.token_id == msg.token_id {
+            SWAPS.remove(deps.storage, &swap.0);
+        }
+    }
+    
     let payment_token: String = if msg.payment_token.is_some() {
         msg.payment_token.unwrap().to_string()
     } else {

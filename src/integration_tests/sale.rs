@@ -16,8 +16,9 @@ use crate::integration_tests::util::{
     bank_query, create_cw20, create_cw721, create_swap, mint_native, mock_app, query,
 };
 use crate::msg::{
-    ExecuteMsg, SwapMsg,
+    ExecuteMsg, QueryMsg, SwapMsg,
 };
+use crate::query::PageResult;
 use crate::state::{SwapType};
 use crate::contract::DENOM;
 
@@ -105,7 +106,7 @@ fn test_buy_native() {
         &mut app,
         nft.clone(),
         Cw721QueryMsg::OwnerOf {
-            token_id: token_id, 
+            token_id: token_id.clone(), 
             include_expired: None
         }
     ).unwrap();
@@ -115,6 +116,19 @@ fn test_buy_native() {
 
     assert_eq!(owner_query.owner, arch_owner);
     assert_eq!(balance_query.amount, Uint128::from(1000000000000000000_u128));
+
+    // Swap was removed from storage
+    let swap_query: PageResult = query(
+        &mut app,
+        swap_inst,
+        QueryMsg::ListingsOfToken {
+            token_id: token_id,
+            swap_type: Some(SwapType::Sale),
+            page: Some(1_u32),
+            limit: None,
+        }
+    ).unwrap();
+    assert_eq!(swap_query.total, 0);
 }
 
 // Receive cw20 tokens and release upon approval
