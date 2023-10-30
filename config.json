@@ -17,7 +17,24 @@
         "project": "archid-marketplace",
         "type": "migrate",
         "chainId": "constantine-3",
+        "codeId": 1623,
+        "contract": "archway1mmm7d4w6dxpjcjp0y3lmvmjq0vtf9y0w7w8jnffgkvqge9v5vzvqe8me0n",
+        "txhash": "B2371691F75843E3FC9C8DFF9DC956D2410DF21C15521BB943921D8DE1E701D5"
+      },
+      {
+        "project": "archid-marketplace",
+        "type": "store",
+        "chainId": "constantine-3",
+        "codeId": 1623,
+        "checksum": "4cc59e06312796e9a85994ee7ebf900eba073f771f76265eaabdec1338967a45",
+        "txhash": "976F4937FC9C8724B35F93334F96C1BF3B8408D5F9EC082FFA2E55CD48C3CC04"
+      },
+      {
+        "project": "archid-marketplace",
+        "type": "migrate",
+        "chainId": "constantine-3",
         "codeId": 1560,
+        "contract": "archway1mmm7d4w6dxpjcjp0y3lmvmjq0vtf9y0w7w8jnffgkvqge9v5vzvqe8me0n",
         "txhash": "B2371691F75843E3FC9C8DFF9DC956D2410DF21C15521BB943921D8DE1E701D5"
       },
       {
@@ -33,6 +50,7 @@
         "type": "migrate",
         "chainId": "constantine-3",
         "codeId": 1556,
+        "contract": "archway1mmm7d4w6dxpjcjp0y3lmvmjq0vtf9y0w7w8jnffgkvqge9v5vzvqe8me0n",
         "txhash": "FDE32851B5A56266F1E1537B4C97D573C218EDBB09F90F2F6B3CFFBC8CBFB104"
       },
       {
@@ -48,6 +66,7 @@
         "type": "migrate",
         "chainId": "constantine-3",
         "codeId": 1555,
+        "contract": "archway1mmm7d4w6dxpjcjp0y3lmvmjq0vtf9y0w7w8jnffgkvqge9v5vzvqe8me0n",
         "txhash": "1FDFAFAE510FB14D46CC469D05EC51EB1C85422D0379A425B3A136408DA26AE9"
       },
       {
@@ -63,6 +82,7 @@
         "type": "migrate",
         "chainId": "constantine-3",
         "codeId": 1542,
+        "contract": "archway1mmm7d4w6dxpjcjp0y3lmvmjq0vtf9y0w7w8jnffgkvqge9v5vzvqe8me0n",
         "txhash": "0EF5D6E10B8BEAF31BB4E6730464809A44C2D3366D337EDC5B58FA2594784AC5"
       },
       {
