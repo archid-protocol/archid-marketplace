@@ -18,9 +18,9 @@ use crate::error::ContractError;
 use cw2::{get_contract_version, set_contract_version};
 
 // Mainnet
-// pub static DENOM: &str = "aarch";
+pub static DENOM: &str = "aarch";
 // Testnet
-pub static DENOM: &str = "aconst";
+// pub static DENOM: &str = "aconst";
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:archid-marketplace";

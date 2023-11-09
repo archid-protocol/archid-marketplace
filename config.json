@@ -16,6 +16,22 @@
       {
         "project": "archid-marketplace",
         "type": "migrate",
+        "chainId": "archway-1",
+        "codeId": 209,
+        "contract": "archway1qcejwf6rpgn2xgryyce4x536q4lrue7k2rdxzx8h9jazm44gqf9s5vrsva",
+        "txhash": "A341AC9A653BD0C69845877CCB07D1C8E669C3DA1239F2EBCBEBFA0371D0EF7A"
+      },
+      {
+        "project": "archid-marketplace",
+        "type": "store",
+        "chainId": "archway-1",
+        "codeId": 209,
+        "checksum": "d007a6ab3a4d45c097cc9f505bcca7cd90123d263519b99cc7a48b9b7236bef8",
+        "txhash": "336D04934EBC44BFDBCB4C8321EDE70E12442ACA851B842E41BF9D32E547578A"
+      },
+      {
+        "project": "archid-marketplace",
+        "type": "migrate",
         "chainId": "constantine-3",
         "codeId": 1623,
         "contract": "archway1mmm7d4w6dxpjcjp0y3lmvmjq0vtf9y0w7w8jnffgkvqge9v5vzvqe8me0n",
@@ -223,13 +239,13 @@
   },
   "network": {
     "name": "Archway",
-    "chainId": "constantine-3",
-    "type": "testnet",
+    "chainId": "archway-1",
+    "type": "mainnet",
     "fees": {
-      "feeDenom": "aconst"
+      "feeDenom": "aarch"
     },
     "gas": {
-      "prices": "0.002aconst",
+      "prices": "0.002aarch",
       "mode": "auto",
       "adjustment": "1.5"
     },
@@ -241,7 +257,7 @@
     },
     "urls": {
       "rpc": {
-        "url": "https://rpc.constantine.archway.tech",
+        "url": "https://rpc.mainnet.archway.io",
         "port": 443
       }
     }
