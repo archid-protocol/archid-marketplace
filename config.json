@@ -242,7 +242,7 @@
     "chainId": "titus-2",
     "type": "testnet",
     "fees": {
-      "feeDenom": "aarch"
+      "feeDenom": "atitus"
     },
     "gas": {
       "prices": "0.002atitus",
