@@ -239,25 +239,25 @@
   },
   "network": {
     "name": "Archway",
-    "chainId": "archway-1",
-    "type": "mainnet",
+    "chainId": "titus-2",
+    "type": "testnet",
     "fees": {
       "feeDenom": "aarch"
     },
     "gas": {
-      "prices": "0.002aarch",
+      "prices": "0.002atitus",
       "mode": "auto",
       "adjustment": "1.5"
     },
     "wasm": {
       "bech32Hrp": "archway",
-      "archwayd": "4.0.2",
+      "archwayd": "5.0.2",
       "configDir": ".archway",
       "binary": "archwayd"
     },
     "urls": {
       "rpc": {
-        "url": "https://rpc.mainnet.archway.io",
+        "url": "https://rpc.titus.archway.io",
         "port": 443
       }
     }
