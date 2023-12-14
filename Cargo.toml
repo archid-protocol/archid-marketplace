@@ -1,6 +1,6 @@
 [package]
 name = "archid-marketplace"
-version = "1.0.5"
+version = "1.0.6"
 authors = [
   "johhonn <jjj.may377@gmail.com>",
   "Drew Taylor <drew.taylor@philabs.xyz>"
