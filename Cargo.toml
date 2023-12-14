@@ -6,6 +6,12 @@ authors = [
   "Drew Taylor <drew.taylor@philabs.xyz>"
 ]
 edition = "2018"
+description = "ArchID NFT swap contract"
+keywords = ["ArchID", "CosmWasm", "cw721", "NFT", "Marketplace"]
+repository = "https://github.com/archid-protocol/archid-marketplace"
+homepage = "https://archid.app"
+documentation = "https://docs.archid.app"
+license = "Apache-2.0"
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
