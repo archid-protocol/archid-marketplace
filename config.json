@@ -17,6 +17,22 @@
         "project": "archid-marketplace",
         "type": "migrate",
         "chainId": "archway-1",
+        "codeId": 516,
+        "contract": "archway1qcejwf6rpgn2xgryyce4x536q4lrue7k2rdxzx8h9jazm44gqf9s5vrsva",
+        "txhash": "B32CAAE6BB6AD8C3EB546C40D60FC3EBA4B0B54E3FE0963965D9C9D62D390FC6"
+      },
+      {
+        "project": "archid-marketplace",
+        "type": "store",
+        "chainId": "archway-1",
+        "codeId": 516,
+        "checksum": "015b4e4c0f447298cabe85199743e7f8d615a42635ff39e955cd9a59919e6b54",
+        "txhash": "3695E85C865806DCD21BBA753D394D62B5604B2D315474DD91018E078212C55A"
+      },
+      {
+        "project": "archid-marketplace",
+        "type": "migrate",
+        "chainId": "archway-1",
         "codeId": 209,
         "contract": "archway1qcejwf6rpgn2xgryyce4x536q4lrue7k2rdxzx8h9jazm44gqf9s5vrsva",
         "txhash": "A341AC9A653BD0C69845877CCB07D1C8E669C3DA1239F2EBCBEBFA0371D0EF7A"
