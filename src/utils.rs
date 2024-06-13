@@ -1,18 +1,18 @@
+use cosmwasm_std::{
+    from_binary, to_binary, Addr, BalanceResponse, BankMsg, BankQuery, Coin, CosmosMsg, DepsMut,
+    Env, QueryRequest, StdError, StdResult, WasmMsg, WasmQuery,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use cosmwasm_std::{
-    Addr, BalanceResponse, BankMsg, BankQuery, Coin, CosmosMsg, DepsMut, Env, from_binary, QueryRequest, 
-    to_binary, StdError, StdResult, WasmMsg, WasmQuery,
-};
 
 use cw20::Cw20ExecuteMsg;
-use cw721_base::{QueryMsg as Cw721QueryMsg};
 use cw721::OwnerOfResponse;
+use cw721_base::QueryMsg as Cw721QueryMsg;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, Extension};
 
 use crate::contract::DENOM;
-use crate::state::{CW721Swap, SwapType};
 use crate::error::ContractError;
+use crate::state::{CW721Swap, SwapType};
 
 // Default and Max page sizes for paginated queries
 const MAX_LIMIT: u32 = 100;
@@ -60,21 +60,25 @@ pub fn calculate_page_params(
     } else if limit > MAX_LIMIT {
         limit = MAX_LIMIT;
     }
-    let modulo = if total_results > 0 { total_results % limit } else { 0 };
-    let last_page = if total_results == 0 {
-        0 
-    } else if modulo > 0 { 
-        total_results / limit 
+    let modulo = if total_results > 0 {
+        total_results % limit
     } else {
-        total_results / limit - 1 
+        0
     };
-    let page_size: u32 = if page == last_page { 
+    let last_page = if total_results == 0 {
+        0
+    } else if modulo > 0 {
+        total_results / limit
+    } else {
+        total_results / limit - 1
+    };
+    let page_size: u32 = if page == last_page {
         match modulo {
             0 => limit,
             _ => modulo,
         }
-    } else { 
-        limit 
+    } else {
+        limit
     };
 
     // Results
@@ -82,7 +86,7 @@ pub fn calculate_page_params(
     let end = (start as u32 + page_size) as usize;
     let res = PageParams {
         start,
-        end, 
+        end,
         page,
         total: total_results as u128,
     };
@@ -149,11 +153,15 @@ pub fn check_contract_balance_ok(
     let required_amount = required.amount.u128();
 
     // Balance query
-    let req: QueryRequest<BankQuery> = QueryRequest::Bank(BankQuery::Balance { 
+    let req: QueryRequest<BankQuery> = QueryRequest::Bank(BankQuery::Balance {
         address: swap_instance.to_string(),
         denom: required_denom,
     });
-    let res = deps.querier.raw_query(&to_binary(&req).unwrap()).unwrap().unwrap();
+    let res = deps
+        .querier
+        .raw_query(&to_binary(&req).unwrap())
+        .unwrap()
+        .unwrap();
     let query: BalanceResponse = from_binary(&res).unwrap();
     let balance: Coin = query.amount;
     if balance.amount.u128() < required_amount {
@@ -187,7 +195,9 @@ pub fn handle_swap_transfers(
         cw20_callback
     // aarch swap
     } else {
-        let payment_funds = if details.swap_type == SwapType::Sale { funds.to_vec() } else { 
+        let payment_funds = if details.swap_type == SwapType::Sale {
+            funds.to_vec()
+        } else {
             ([Coin {
                 denom: String::from(DENOM),
                 amount: details.price,

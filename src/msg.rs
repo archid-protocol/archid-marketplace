@@ -1,8 +1,8 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use crate::state::{Config, SwapType};
 use cosmwasm_std::{Addr, Uint128};
 use cw20::Expiration;
-use crate::state::{Config,SwapType};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
@@ -17,7 +17,7 @@ pub enum ExecuteMsg {
     Finish(SwapMsg),
     Cancel(CancelMsg),
     Update(UpdateMsg),
-    UpdateConfig { config: Config, },
+    UpdateConfig { config: Config },
 }
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -63,7 +63,7 @@ pub enum QueryMsg {
         page: Option<u32>,
         limit: Option<u32>,
     },
-    /// Get all listings for a token of type `Swap::Sale` and `Swap::Offer` 
+    /// Get all listings for a token of type `Swap::Sale` and `Swap::Offer`
     /// or both (`None`)
     ListingsOfToken {
         token_id: String,
@@ -73,14 +73,14 @@ pub enum QueryMsg {
     },
     /// Show all swaps created by a specific address
     /// Defaults to SwapType::Sale if no `swap_type`
-    SwapsOf { 
+    SwapsOf {
         address: Addr,
         swap_type: Option<SwapType>,
         page: Option<u32>,
         limit: Option<u32>,
     },
     /// Show all swaps of a given price range
-    SwapsByPrice { 
+    SwapsByPrice {
         min: Option<Uint128>,
         max: Option<Uint128>,
         swap_type: Option<SwapType>,
@@ -105,7 +105,9 @@ pub enum QueryMsg {
 
     /// Returns the details of the named swap, error if not created.
     /// Return type: DetailsResponse.
-    Details { id: String },
+    Details {
+        id: String,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -124,8 +126,8 @@ pub struct DetailsResponse {
     pub creator: Addr,
     pub contract: Addr,
     pub payment_token: Option<Addr>,
-    pub token_id: String,    
-    pub expires: Expiration,    
+    pub token_id: String,
+    pub expires: Expiration,
     pub price: Uint128,
     pub swap_type: SwapType,
 }
