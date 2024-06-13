@@ -1,23 +1,19 @@
 #![cfg(test)]
-use std::hash::Hash;
-use std::collections::HashSet;
 use serde::{de::DeserializeOwned, Serialize};
+use std::collections::HashSet;
+use std::hash::Hash;
 
 use cosmwasm_std::{
-    Addr, BalanceResponse as BalanceResponseBank, BankQuery, Coin, Empty, from_binary, Querier, QueryRequest, 
-    StdError, to_binary, Uint128, WasmQuery,
+    from_binary, to_binary, Addr, BalanceResponse as BalanceResponseBank, BankQuery, Coin, Empty,
+    Querier, QueryRequest, StdError, Uint128, WasmQuery,
 };
-use cw_multi_test::{
-    App, Contract, ContractWrapper, Executor,
-};
+use cw_multi_test::{App, Contract, ContractWrapper, Executor};
 
 use cw20::Cw20Coin;
-use cw721_base::{
-    msg::InstantiateMsg as Cw721InstantiateMsg
-};
+use cw721_base::msg::InstantiateMsg as Cw721InstantiateMsg;
 
-use crate::msg::InstantiateMsg;
 use crate::contract::DENOM;
+use crate::msg::InstantiateMsg;
 
 pub fn mock_app() -> App {
     App::default()
@@ -51,28 +47,27 @@ pub fn contract_cw721() -> Box<dyn Contract<Empty>> {
 }
 
 pub fn create_swap(router: &mut App, owner: &Addr, cw721: Addr) -> Addr {
-    
     let swap_id = router.store_code(contract_swap721());
     let msg = InstantiateMsg {
         admin: owner.clone(),
-        cw721: cw721,  
+        cw721: cw721,
     };
     let swap_addr = router
-        .instantiate_contract(swap_id, owner.clone(), &msg, &[], "swap721",None)
+        .instantiate_contract(swap_id, owner.clone(), &msg, &[], "swap721", None)
         .unwrap();
     swap_addr
 }
 
-pub fn create_cw721(router: &mut App,minter: &Addr) -> Addr {
+pub fn create_cw721(router: &mut App, minter: &Addr) -> Addr {
     let cw721_id = router.store_code(contract_cw721());
     let msg = Cw721InstantiateMsg {
         name: "TESTNFT".to_string(),
         symbol: "TSNFT".to_string(),
         minter: String::from(minter),
-    };   
+    };
     let contract = router
-        .instantiate_contract(cw721_id, minter.clone(), &msg, &[], "swap721",None)
-        .unwrap();    
+        .instantiate_contract(cw721_id, minter.clone(), &msg, &[], "swap721", None)
+        .unwrap();
     contract
 }
 
@@ -102,34 +97,34 @@ pub fn create_cw20(
         name: name,
         symbol: symbol,
         decimals: 2,
-        initial_balances: vec![Cw20Coin{
+        initial_balances: vec![Cw20Coin {
             address: owner.to_string(),
             amount: balance,
         }],
         mint: None,
-        marketing:None
+        marketing: None,
     };
     let addr = router
-        .instantiate_contract(cw20_id, owner.clone(), &msg, &[], "CASH",None)
+        .instantiate_contract(cw20_id, owner.clone(), &msg, &[], "CASH", None)
         .unwrap();
     addr
 }
 
-pub fn query<M,T>(router: &mut App, target_contract: Addr, msg: M) -> Result<T, StdError>
-    where
-        M: Serialize + DeserializeOwned,
-        T: Serialize + DeserializeOwned,
-    {
-        router.wrap().query(&QueryRequest::Wasm(WasmQuery::Smart {
-            contract_addr: target_contract.to_string(),
-            msg: to_binary(&msg).unwrap(),
-        }))
-    }
+pub fn query<M, T>(router: &mut App, target_contract: Addr, msg: M) -> Result<T, StdError>
+where
+    M: Serialize + DeserializeOwned,
+    T: Serialize + DeserializeOwned,
+{
+    router.wrap().query(&QueryRequest::Wasm(WasmQuery::Smart {
+        contract_addr: target_contract.to_string(),
+        msg: to_binary(&msg).unwrap(),
+    }))
+}
 
 pub fn bank_query(app: &App, address: &Addr) -> Coin {
-    let req: QueryRequest<BankQuery> = QueryRequest::Bank(BankQuery::Balance { 
-        address: address.to_string(), 
-        denom: DENOM.to_string() 
+    let req: QueryRequest<BankQuery> = QueryRequest::Bank(BankQuery::Balance {
+        address: address.to_string(),
+        denom: DENOM.to_string(),
     });
     let res = app.raw_query(&to_binary(&req).unwrap()).unwrap().unwrap();
     let balance: BalanceResponseBank = from_binary(&res).unwrap();

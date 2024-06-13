@@ -1,14 +1,10 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{
-    BlockInfo, Addr, Order, Uint128, Storage, StdResult,
-};
-use cw_storage_plus::{
-    Bound, Item, Map,
-};
+use cosmwasm_std::{Addr, BlockInfo, Order, StdResult, Storage, Uint128};
+use cw_storage_plus::{Bound, Item, Map};
 
-use cw20::{Expiration};
+use cw20::Expiration;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Config {
@@ -18,7 +14,7 @@ pub struct Config {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum SwapType {
     Offer,
-    Sale
+    Sale,
 }
 // swap type of false equals offer, swap type of true equals buy
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

@@ -1,10 +1,10 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 use cosmwasm_std::{Addr, Deps, Order, StdResult, Uint128};
 use cw_storage_plus::Bound;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::msg::{DetailsResponse, ListResponse};
-use crate::state::{all_swap_ids, CW721Swap, CONFIG, SWAPS, SwapType};
+use crate::state::{all_swap_ids, CW721Swap, SwapType, CONFIG, SWAPS};
 use crate::utils::{calculate_page_params, PageParams};
 
 // Pagination query result format for filtered swap queries
@@ -56,18 +56,16 @@ pub fn query_swap_total(deps: Deps, side: SwapType) -> StdResult<u128> {
         .unwrap()
         .into_iter()
         .map(|t| t.1)
-        .filter(|item| {
-            item.nft_contract == config.cw721 && item.swap_type == side
-        })
+        .filter(|item| item.nft_contract == config.cw721 && item.swap_type == side)
         .collect();
-    
+
     Ok(results.len() as u128)
 }
 
 pub fn query_swaps(
     deps: Deps,
-    side: SwapType, 
-    page: Option<u32>, 
+    side: SwapType,
+    page: Option<u32>,
     limit: Option<u32>,
 ) -> StdResult<PageResult> {
     let config = CONFIG.load(deps.storage)?;
@@ -79,10 +77,7 @@ pub fn query_swaps(
         .unwrap()
         .into_iter()
         .map(|t| t.1)
-        .filter(|item| {
-            item.nft_contract == config.cw721 
-            && item.swap_type == side
-        })
+        .filter(|item| item.nft_contract == config.cw721 && item.swap_type == side)
         .collect();
 
     let paging: PageParams = calculate_page_params(page, limit, results.len() as u32)?;
@@ -98,8 +93,8 @@ pub fn query_swaps(
 pub fn query_swaps_of_token(
     deps: Deps,
     token_id: String,
-    side: Option<SwapType>, 
-    page: Option<u32>, 
+    side: Option<SwapType>,
+    page: Option<u32>,
     limit: Option<u32>,
 ) -> StdResult<PageResult> {
     let config = CONFIG.load(deps.storage)?;
@@ -113,9 +108,9 @@ pub fn query_swaps_of_token(
             .into_iter()
             .map(|t| t.1)
             .filter(|item| {
-                item.nft_contract == config.cw721 
-                && item.token_id == token_id
-                && item.swap_type == swap_type
+                item.nft_contract == config.cw721
+                    && item.token_id == token_id
+                    && item.swap_type == swap_type
             })
             .collect()
     } else {
@@ -123,10 +118,7 @@ pub fn query_swaps_of_token(
             .unwrap()
             .into_iter()
             .map(|t| t.1)
-            .filter(|item| {
-                item.nft_contract == config.cw721 
-                && item.token_id == token_id
-            })
+            .filter(|item| item.nft_contract == config.cw721 && item.token_id == token_id)
             .collect()
     };
 
@@ -141,7 +133,7 @@ pub fn query_swaps_of_token(
 }
 
 pub fn query_swaps_by_creator(
-    deps: Deps, 
+    deps: Deps,
     address: Addr,
     swap_type: Option<SwapType>,
     page: Option<u32>,
@@ -158,9 +150,7 @@ pub fn query_swaps_by_creator(
         .into_iter()
         .map(|t| t.1)
         .filter(|item| {
-            item.nft_contract == config.cw721 
-            && item.creator == address
-            && item.swap_type == side
+            item.nft_contract == config.cw721 && item.creator == address && item.swap_type == side
         })
         .collect();
 
@@ -175,9 +165,9 @@ pub fn query_swaps_by_creator(
 }
 
 pub fn query_swaps_by_price(
-    deps: Deps, 
-    min: Option<Uint128>, 
-    max: Option<Uint128>, 
+    deps: Deps,
+    min: Option<Uint128>,
+    max: Option<Uint128>,
     swap_type: Option<SwapType>,
     page: Option<u32>,
     limit: Option<u32>,
@@ -196,10 +186,10 @@ pub fn query_swaps_by_price(
             .into_iter()
             .map(|t| t.1)
             .filter(|item| {
-                item.nft_contract == config.cw721 
-                && item.price.u128() >= min.u128()
-                && item.price.u128() <= max_value.u128()
-                && item.swap_type == side
+                item.nft_contract == config.cw721
+                    && item.price.u128() >= min.u128()
+                    && item.price.u128() <= max_value.u128()
+                    && item.swap_type == side
             })
             .collect()
     } else {
@@ -208,9 +198,9 @@ pub fn query_swaps_by_price(
             .into_iter()
             .map(|t| t.1)
             .filter(|item| {
-                item.nft_contract == config.cw721 
-                && item.price.u128() >= min.u128()
-                && item.swap_type == side
+                item.nft_contract == config.cw721
+                    && item.price.u128() >= min.u128()
+                    && item.swap_type == side
             })
             .collect()
     };
@@ -226,8 +216,8 @@ pub fn query_swaps_by_price(
 }
 
 pub fn query_swaps_by_denom(
-    deps: Deps, 
-    payment_token: Option<Addr>, 
+    deps: Deps,
+    payment_token: Option<Addr>,
     swap_type: Option<SwapType>,
     page: Option<u32>,
     limit: Option<u32>,
@@ -245,9 +235,9 @@ pub fn query_swaps_by_denom(
             .into_iter()
             .map(|t| t.1)
             .filter(|item| {
-                item.nft_contract == config.cw721 
-                && item.payment_token.clone().unwrap() == token_addr
-                && item.swap_type == side
+                item.nft_contract == config.cw721
+                    && item.payment_token.clone().unwrap() == token_addr
+                    && item.swap_type == side
             })
             .collect()
     // Native ARCH denom
@@ -257,9 +247,9 @@ pub fn query_swaps_by_denom(
             .into_iter()
             .map(|t| t.1)
             .filter(|item| {
-                item.nft_contract == config.cw721 
-                && item.payment_token.is_none()
-                && item.swap_type == side
+                item.nft_contract == config.cw721
+                    && item.payment_token.is_none()
+                    && item.swap_type == side
             })
             .collect()
     };
@@ -275,7 +265,7 @@ pub fn query_swaps_by_denom(
 }
 
 pub fn query_swaps_by_payment_type(
-    deps: Deps, 
+    deps: Deps,
     cw20: bool,
     swap_type: Option<SwapType>,
     page: Option<u32>,
@@ -294,9 +284,9 @@ pub fn query_swaps_by_payment_type(
             .into_iter()
             .map(|t| t.1)
             .filter(|item| {
-                item.nft_contract == config.cw721 
-                && item.payment_token.is_some()
-                && item.swap_type == side
+                item.nft_contract == config.cw721
+                    && item.payment_token.is_some()
+                    && item.swap_type == side
             })
             .collect()
     // ARCH swap
@@ -306,9 +296,9 @@ pub fn query_swaps_by_payment_type(
             .into_iter()
             .map(|t| t.1)
             .filter(|item| {
-                item.nft_contract == config.cw721 
-                && item.payment_token.is_none()
-                && item.swap_type == side
+                item.nft_contract == config.cw721
+                    && item.payment_token.is_none()
+                    && item.swap_type == side
             })
             .collect()
     };

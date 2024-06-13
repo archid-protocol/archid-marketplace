@@ -1,12 +1,14 @@
-use cosmwasm_std::{Coin, DepsMut, Env, MessageInfo, Order, Response};
-
-use crate::state::{CW721Swap, Config, CONFIG, SWAPS, SwapType};
-use crate::utils::{
-    check_sent_required_payment, query_name_owner, handle_swap_transfers,
+use cosmwasm_std::{
+    to_binary, Coin, DepsMut, Env, MessageInfo, Order, QueryRequest, Response, WasmQuery,
 };
-use crate::msg::{CancelMsg, SwapMsg, UpdateMsg};
+
+use cw721::OwnerOfResponse;
+
 use crate::contract::DENOM;
 use crate::error::ContractError;
+use crate::msg::{CancelMsg, SwapMsg, UpdateMsg};
+use crate::state::{CW721Swap, Config, SwapType, CONFIG, SWAPS};
+use crate::utils::{check_sent_required_payment, handle_swap_transfers, query_name_owner};
 
 pub fn execute_create(
     deps: DepsMut,
@@ -72,7 +74,7 @@ pub fn execute_update(
         return Err(ContractError::Unauthorized {});
     }
 
-    // For security reasons, creator, nft_contract, token_id,  
+    // For security reasons, creator, nft_contract, token_id,
     // payment_token and swap_type should not be updatable
     // E.g. only price and expiration can be modified
     let swap = CW721Swap {
@@ -120,13 +122,30 @@ pub fn execute_finish(
             return Err(ContractError::InvalidInput {});
         }
     }
-  
+
     let transfer_results = match msg.swap_type {
-        SwapType::Offer => handle_swap_transfers(&info.sender, &swap.creator, swap.clone(), &info.funds)?,
-        SwapType::Sale => handle_swap_transfers(&swap.creator, &info.sender, swap.clone(), &info.funds)?,
+        SwapType::Offer => {
+            let owner_of: OwnerOfResponse =
+                deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+                    contract_addr: swap.nft_contract.to_string(),
+                    msg: to_binary(&cw721::Cw721QueryMsg::OwnerOf {
+                        token_id: swap.token_id.clone(),
+                        include_expired: None,
+                    })?,
+                }))?;
+
+            if owner_of.owner != info.sender {
+                return Err(ContractError::Unauthorized {});
+            }
+
+            handle_swap_transfers(&info.sender, &swap.creator, swap.clone(), &info.funds)?
+        }
+        SwapType::Sale => {
+            handle_swap_transfers(&swap.creator, &info.sender, swap.clone(), &info.funds)?
+        }
     };
 
-    // Remove all swaps for this token_id 
+    // Remove all swaps for this token_id
     // (as they're no longer valid)
     let swaps: Result<Vec<(String, CW721Swap)>, cosmwasm_std::StdError> = SWAPS
         .range(deps.storage, None, None, Order::Ascending)
@@ -136,7 +155,7 @@ pub fn execute_finish(
             SWAPS.remove(deps.storage, &swap.0);
         }
     }
-    
+
     let payment_token: String = if msg.payment_token.is_some() {
         msg.payment_token.unwrap().to_string()
     } else {
