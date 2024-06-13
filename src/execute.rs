@@ -1,4 +1,8 @@
-use cosmwasm_std::{Coin, DepsMut, Env, MessageInfo, Order, Response};
+use cosmwasm_std::{
+    to_binary, Coin, DepsMut, Env, MessageInfo, Order, QueryRequest, Response, WasmQuery,
+};
+
+use cw721::OwnerOfResponse;
 
 use crate::contract::DENOM;
 use crate::error::ContractError;
@@ -121,6 +125,19 @@ pub fn execute_finish(
 
     let transfer_results = match msg.swap_type {
         SwapType::Offer => {
+            let owner_of: OwnerOfResponse =
+                deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+                    contract_addr: swap.nft_contract.to_string(),
+                    msg: to_binary(&cw721::Cw721QueryMsg::OwnerOf {
+                        token_id: swap.token_id.clone(),
+                        include_expired: None,
+                    })?,
+                }))?;
+
+            if owner_of.owner != info.sender {
+                return Err(ContractError::Unauthorized {});
+            }
+
             handle_swap_transfers(&info.sender, &swap.creator, swap.clone(), &info.funds)?
         }
         SwapType::Sale => {
