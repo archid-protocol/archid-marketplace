@@ -1,11 +1,11 @@
 [package]
 name = "archid-marketplace"
-version = "1.0.7"
+version = "1.0.8"
 authors = [
   "johhonn <jjj.may377@gmail.com>",
   "Drew Taylor <drew.taylor@philabs.xyz>"
 ]
-edition = "2018"
+edition = "2021"
 description = "ArchID NFT swap contract"
 keywords = ["ArchID", "CosmWasm", "cw721", "NFT", "Marketplace"]
 repository = "https://github.com/archid-protocol/archid-marketplace"
@@ -46,7 +46,7 @@ optimize = """docker run --rm -v "$(pwd)":/code \
   -e CARGO_TERM_COLOR=always \
   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.5
+  cosmwasm/rust-optimizer:0.15.1
 """
 
 [dependencies]
